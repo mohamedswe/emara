@@ -1,0 +1,162 @@
+{
+  "schema": "functionality-oracle/v1",
+  "target": "Uptime Kuma",
+  "repositoryCommit": "437fcd20ab8f2df2829cf4bc59544a144bbbe54d",
+  "coverage": {
+    "recognizedEntrypoints": 183,
+    "minimumDocumentationPromises": 20,
+    "requiredDocumentationPatterns": [
+      "Monitoring uptime for HTTP\\(s\\) / TCP / HTTP\\(s\\) Keyword",
+      "Multiple status pages",
+      "Notifications via Telegram, Discord, Gotify, Slack",
+      "Multi Languages"
+    ]
+  },
+  "requiredFeatures": [
+    {
+      "key": "status-pages",
+      "acceptableIds": ["get-status-page"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "server.js defines GET /status-page rendering the public status pages; README.md:31 promises 'Multiple status pages'."
+    },
+    {
+      "key": "status-page-manifest",
+      "acceptableIds": ["get-api-status-page-slug-manifest-json"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "Public status-page manifest.json endpoint (slug/manifest.json), part of the README:31 status pages promise."
+    },
+    {
+      "key": "badge-status",
+      "acceptableIds": ["get-api-badge-id-status"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "GET /api/badge/:id/status returns badge shields; README contains only image-shield markdown (lines 9/11), no badge product promise. Hand-derived UNDOCUMENTED."
+    },
+    {
+      "key": "monitor-list-page",
+      "acceptableIds": ["page-list"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "Frontend PAGE /List is the monitor list; README.md:26 promises monitoring uptime for HTTP(s)/TCP/Keyword/Json/Webhook/DNS/Push/Steam."
+    },
+    {
+      "key": "dashboard-page",
+      "acceptableIds": ["page-dashboard"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "Frontend PAGE /Dashboard exists; no explicit dashboard promise in README (screenshots only)."
+    },
+    {
+      "key": "edit-monitor-page",
+      "acceptableIds": ["page-editmonitor"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "Frontend PAGE /EditMonitor; no explicit edit-monitor-page promise."
+    },
+    {
+      "key": "settings-page",
+      "acceptableIds": ["page-settings"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "Frontend PAGE /Settings; not explicitly promised."
+    },
+    {
+      "key": "setup-page",
+      "acceptableIds": ["page-setup"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "Frontend PAGE /Setup (setup wizard); not explicitly promised."
+    },
+    {
+      "key": "setup-database",
+      "acceptableIds": ["post-setup-database"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "POST /setup-database initializes the database during setup; not explicitly promised."
+    },
+    {
+      "key": "health-status",
+      "acceptableIds": ["get-status"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "GET /status health endpoint; README has no explicit health-endpoint promise."
+    },
+    {
+      "key": "test-webhook",
+      "acceptableIds": ["post-test-webhook"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "POST /test-webhook test route; not explicitly promised."
+    },
+    {
+      "key": "push-api",
+      "acceptableIds": ["all-api-push-pushtoken"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "POST /api/push/:pushToken receives push-monitor heartbeats; README.md:26 lists Push among the supported monitor types."
+    },
+    {
+      "key": "notification-providers",
+      "acceptableIds": ["module-server-notification-providers"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "server/notification-providers implements the providers; README.md:28 promises notifications via Telegram, Discord, Gotify, Slack, Pushover, Email (SMTP) and more."
+    },
+    {
+      "key": "knex-migrations",
+      "acceptableIds": ["module-db-knex-migrations"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "db/knex_migrations holds the schema migrations; db/knex_migrations/README.md documents them."
+    },
+    {
+      "key": "reset-password-script",
+      "acceptableIds": ["npm-script-reset-password"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "package.json script reset-password runs extra/reset-password.js; grep-verified absent from README."
+    },
+    {
+      "key": "start-server",
+      "acceptableIds": ["npm-script-start-server"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "package.json script start-server; README install/run section documents starting the server."
+    },
+    {
+      "key": "robots-txt",
+      "acceptableIds": ["get-robots-txt"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "GET /robots.txt route; not explicitly promised."
+    },
+    {
+      "key": "status-rss",
+      "acceptableIds": ["get-status-slug-rss"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "Public RSS feed for status pages; not explicitly promised."
+    },
+    {
+      "key": "entry-page-api",
+      "acceptableIds": ["get-api-entry-page"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "GET /api/entry-page API; not explicitly promised."
+    }
+  ],
+  "requiredDeadCode": [
+    {"key": "unused-create-release", "file": "extra/release/lib.mjs", "symbol": "createRelease", "allowedVerdicts": ["VALIDATION_REQUIRED", "UNKNOWN_DYNAMIC_USAGE"]},
+    {"key": "unused-press-any-key", "file": "extra/release/lib.mjs", "symbol": "pressAnyKey", "allowedVerdicts": ["VALIDATION_REQUIRED", "UNKNOWN_DYNAMIC_USAGE"]},
+    {"key": "unused-basic-auth", "file": "server/auth.js", "symbol": "basicAuth", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-util-debug", "file": "src/util.js", "symbol": "debug", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-util-flip-status", "file": "src/util.js", "symbol": "flipStatus", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-util-sleep", "file": "src/util.js", "symbol": "sleep", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-util-ucfirst", "file": "src/util.js", "symbol": "ucfirst", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-style-bgblack", "file": "src/util.ts", "symbol": "CONSOLE_STYLE_BgBlack", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-style-fgwhite", "file": "src/util.ts", "symbol": "CONSOLE_STYLE_FgWhite", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-style-hidden", "file": "src/util.ts", "symbol": "CONSOLE_STYLE_Hidden", "allowedVerdicts": ["VALIDATION_REQUIRED"]}
+  ],
+  "forbiddenDocumentationMappings": [
+    {
+      "key": "agent-instruction-text-is-not-product-docs",
+      "featurePatterns": [".*"],
+      "documentationPatterns": ["BANNED immediately", "AI slop"],
+      "reason": "AGENTS.md agent-instruction prose must never document a feature."
+    },
+    {
+      "key": "support-channel-text-is-not-behavior",
+      "featurePatterns": [".*"],
+      "documentationPatterns": ["recommend using Google", "subreddit"],
+      "reason": "README support/FAQ paragraphs are not behavioral documentation."
+    }
+  ],
+  "performanceBudgets": {
+    "deterministicColdWallClockMs": 150000,
+    "assistedColdWallClockMs": 150000,
+    "maximumModelRequests": 2
+  }
+}

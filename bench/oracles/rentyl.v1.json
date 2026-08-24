@@ -1,0 +1,213 @@
+{
+  "schema": "functionality-oracle/v1",
+  "target": "Rentyl-LIVE",
+  "repositoryCommit": "6f191cb2faaefe18dfbd0b7c2242e2e648d0c33e",
+  "coverage": {
+    "recognizedEntrypoints": 57,
+    "minimumDocumentationPromises": 5,
+    "requiredDocumentationPatterns": [
+      "source venv/Scripts/activate",
+      "npm install @rollup/rollup-win32-x64-msvc",
+      "Added GET /auth/login",
+      "Frontend \\(POST /users\\)",
+      "test suite provides comprehensive coverage"
+    ]
+  },
+  "requiredFeatures": [
+    {
+      "key": "auth-register",
+      "acceptableIds": ["post-register"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/auth.py:114 defines POST /register and delegates to register_user; backend/models/auth.py:RegisterRequest validates the payload (audit entrypoint title Register User)."
+    },
+    {
+      "key": "auth-login",
+      "acceptableIds": ["post-login"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/auth.py:66 defines POST /login and calls login_user; backend/services/jwt_service.py generates access and refresh tokens (audit entrypoint title Login)."
+    },
+    {
+      "key": "auth-profile",
+      "acceptableIds": ["get-profile"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/auth.py:133 defines GET /profile; README.md:45 'Made /auth/profile safely extract and decode the Bearer token' documents it; backend/services/auth_service.py:get_profile_from_token backs it."
+    },
+    {
+      "key": "auth-refresh",
+      "acceptableIds": ["post-refresh"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/auth.py:155 defines POST /refresh, but no product documentation promises a refresh endpoint; hand verification classifies it as undocumented."
+    },
+    {
+      "key": "auth-logout",
+      "acceptableIds": ["post-logout", "post-logout-all"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/auth.py:203 and :245 define POST /logout and POST /logout-all, but no product documentation promises logout. v1.1: was DOCUMENTED via junk README credit."
+    },
+    {
+      "key": "auth-sessions",
+      "acceptableIds": ["get-sessions", "post-revoke-session"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/auth.py:277 and :298 define GET /sessions and POST /revoke-session; no product documentation promises session listing/revocation. v1.1: was DOCUMENTED via junk README credit."
+    },
+    {
+      "key": "users",
+      "acceptableIds": ["post-users", "get-users"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/users.py:11 and :16 define POST /users and GET /users, backed by create_user_service/get_users_service and user models. README:53 diagrams the POST /users flow."
+    },
+    {
+      "key": "cars-crud",
+      "acceptableIds": ["post", "get-2", "get-car-id", "put-car-id", "put-car-id-2", "delete-car-id"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/cars.py:25,105,109,181,210,239 implement car create/list/get/update (both slash variants)/delete; backend/models/car.py provides CarCreate/CarUpdate."
+    },
+    {
+      "key": "fleet",
+      "acceptableIds": ["get-fleet"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/analytics.py:29 defines GET /fleet and calls analytics_service.get_fleet_analytics, including utilization and maintenance/net-income calculations (audit title Get Fleet)."
+    },
+    {
+      "key": "rentals",
+      "acceptableIds": ["post-5", "get-6", "get-active", "get-rental-id", "put-rental-id", "delete-rental-id"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/rentals.py:27,95,138,189,211,236 implement rental create/list/active/get/update/delete; backend/services/rental_service.py supplies the service calls."
+    },
+    {
+      "key": "maintenance",
+      "acceptableIds": ["get-5", "post-4", "get-car-car-id-2", "put-maintenance-id", "delete-maintenance-id"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/maintenance.py:18,34,45,61,80 implement maintenance list/create-by-car/update/delete and maintenance_service operations."
+    },
+    {
+      "key": "clients",
+      "acceptableIds": ["post-2", "get-3", "get-encrypted-id", "put-encrypted-id", "delete-encrypted-id"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/clients.py:10,18,25,32,39 implement client create/list/get/update/delete; encrypted_id is decoded at the route boundary."
+    },
+    {
+      "key": "companies",
+      "acceptableIds": ["post-3", "get-4", "get-company-id"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/companies.py:47,60,78 implement company create/list/get, but no product documentation promises company management. v1.1: was DOCUMENTED via the README:53 POST /users diagram (junk credit)."
+    },
+    {
+      "key": "client-documents-encryption",
+      "acceptableIds": ["post-clients-documents", "get-clients-client-id-documents", "delete-document-id"],
+      "implementationNodePatterns": ["backend/routes/client_documents.py", "backend/utils/aes_utils.py"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/client_documents.py:26,113,139 implement upload/list/delete client documents while aes_utils encrypt_id/decrypt_id protect identifiers. No product documentation promises client documents. v1.1: was DOCUMENTED via junk README credit."
+    },
+    {
+      "key": "calendar",
+      "acceptableIds": ["get-events"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/calendar.py:10 defines GET /events and get_calendar_events reads company-scoped events. No product documentation promises a calendar. v1.1: was DOCUMENTED via junk README credit."
+    },
+    {
+      "key": "currency",
+      "acceptableIds": ["get-supported-currencies", "get-exchange-rates", "post-convert"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "backend/routes/currency.py:85,92,115 implement supported currencies, exchange-rate retrieval/fallback caching, and conversion; no product documentation promises currency features."
+    },
+    {
+      "key": "analytics",
+      "acceptableIds": ["get-car-car-id", "get-fleet", "get-dashboard", "get-analytics"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/analytics.py:14,29,40 and backend/routes/rentals.py:176 expose car, fleet, dashboard, and rental analytics; analytics_service contains the calculations."
+    },
+    {
+      "key": "pdf-net-income-statement",
+      "acceptableIds": ["get-net-income-statement-download"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/routes/analytics.py:47 defines GET /net-income-statement/download and calls backend/services/pdf_service.py:generate_net_income_statement_pdf."
+    },
+    {
+      "key": "company-isolation-authorization",
+      "acceptableIds": [],
+      "titlePatterns": ["Get Fleet", "Get Dashboard", "List Documents"],
+      "implementationNodePatterns": ["function:backend/dependencies.py:get_current_user_with_company", "function:backend/dependencies.py:get_current_company_id"],
+      "entrypointPatterns": ["backend/routes/(analytics|clients|cars|rentals|maintenance)\\.py"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "backend/dependencies.py:32-89 builds authenticated user/company context and :103-109 extracts company_id; company-scoped route handlers use that context."
+    },
+    {
+      "key": "frontend-behavior",
+      "acceptableIds": ["module-frontend-src"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "The audit recognizes module-frontend-src as Frontend Source; the repository frontend contains routed pages/components for dashboard, cars, rentals, clients, calendar, auth, and API-backed rendering."
+    },
+    {
+      "key": "frontend-login-modal",
+      "acceptableIds": ["module-frontend-src-login-modal"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "frontend/src/components/Auth/LoginModal.jsx is recognized by the audit as Login Modal Component, providing the frontend login behavior described by README lines 41-45."
+    },
+    {
+      "key": "frontend-car-analytics",
+      "acceptableIds": ["module-frontend-src-car-analytics-section"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "frontend/src/pages/AnalyticsPage/CarAnalyticsSection.jsx is recognized by the audit as Car Analytics Section and corresponds to the backend car/fleet analytics endpoints."
+    }
+  ],
+  "requiredDeadCode": [
+    {"key": "unused-car-field-import", "file": "backend/models/car.py", "symbol": "Field", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-rental-list-import", "file": "backend/controllers/rental_controller.py", "symbol": "List", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-require-admin", "file": "backend/dependencies.py", "symbol": "require_admin", "allowedVerdicts": ["VALIDATION_REQUIRED", "UNKNOWN_DYNAMIC_USAGE"]},
+    {"key": "unused-require-company-access", "file": "backend/dependencies.py", "symbol": "require_company_access", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-current-user-role", "file": "backend/dependencies.py", "symbol": "get_current_user_role", "allowedVerdicts": ["VALIDATION_REQUIRED", "UNKNOWN_DYNAMIC_USAGE"]},
+    {"key": "unused-profile-token-import", "file": "backend/controllers/auth_controller.py", "symbol": "get_profile_from_token", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-auth-http-exception-import", "file": "backend/controllers/auth_controller.py", "symbol": "HTTPException", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-car-controller-depends-import", "file": "backend/controllers/car_controller.py", "symbol": "Depends", "allowedVerdicts": ["VALIDATION_REQUIRED"]},
+    {"key": "unused-verify-company-access", "file": "backend/services/auth_service.py", "symbol": "verify_company_access", "allowedVerdicts": ["VALIDATION_REQUIRED", "UNKNOWN_DYNAMIC_USAGE"]},
+    {"key": "unused-api-client", "file": "frontend/src/utils/api.js", "symbol": "api", "allowedVerdicts": ["VALIDATION_REQUIRED", "UNKNOWN_DYNAMIC_USAGE"]}
+  ],
+  "forbiddenDocumentationMappings": [
+    {
+      "key": "setup-instructions-are-not-user-auth-docs",
+      "featurePatterns": ["Register User", "Login"],
+      "documentationPatterns": ["pip install", "uvicorn backend\\.main"],
+      "reason": "README setup commands describe environment/bootstrap behavior, not the semantics of authentication endpoints."
+    },
+    {
+      "key": "test-instructions-are-not-frontend-behavior",
+      "featurePatterns": ["Frontend Source", "Login Modal Component"],
+      "documentationPatterns": ["TESTING PULL", "test suite"],
+      "reason": "README test/instruction claims must not be credited as evidence that frontend behavior exists."
+    },
+    {
+      "key": "vite-config-notes-are-not-feature-docs",
+      "featurePatterns": ["."],
+      "documentationPatterns": ["fixed the vite\\.config"],
+      "reason": "v1.1: README:37 is a build-fix changelog note; it documents no runtime behavior and must never be credited to any feature (the auditor mapped it to refresh/logout/documents/companies)."
+    },
+    {
+      "key": "get-login-pages-note-is-auth-only",
+      "featurePatterns": ["^(?!post-login\\b)(?!post-register\\b).*"],
+      "documentationPatterns": ["Added GET /auth/login and GET /auth/register pages"],
+      "reason": "v1.1: README:43 documents the GET /auth/login and /auth/register pages only; it must not credit refresh/logout/sessions/calendar/documents/companies."
+    },
+    {
+      "key": "users-dataflow-is-users-only",
+      "featurePatterns": ["^(?!post-users\\b)(?!get-users\\b).*"],
+      "documentationPatterns": ["Frontend \\(POST /users\\)"],
+      "reason": "v1.1: README:53 diagrams the POST /users flow only; it must not credit non-user features (companies/calendar/documents)."
+    }
+  ],
+  "pillarFindings": [
+    {
+      "key": "unauth-client-documents-listing",
+      "pillar": "security",
+      "severity": "high",
+      "evidence": "backend/routes/client_documents.py:113 GET /clients/{client_id}/documents/ has no authentication or company-scoping dependency; any caller can list any client's documents by guessing an encrypted client_id.",
+      "source": "Hand verification 2026-08-23",
+      "note": "Documentation-only record; not graded by the v1 functionality oracle. Future security pillar must assert it."
+    }
+  ],
+  "performanceBudgets": {
+    "deterministicColdWallClockMs": 150000,
+    "assistedColdWallClockMs": 150000,
+    "maximumModelRequests": 2
+  }
+}

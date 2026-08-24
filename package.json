@@ -1,0 +1,36 @@
+{
+  "name": "emara",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "auditor": "bin/auditor.mjs"
+  },
+  "scripts": {
+    "auditor": "node --experimental-strip-types src/audit/runFunctionalityAudit.ts",
+    "build:graph": "node --experimental-strip-types src/graph/buildGraph.ts",
+    "build:contract": "node --experimental-strip-types src/contract/buildContract.ts",
+    "audit:functionality": "node --experimental-strip-types src/audit/runFunctionalityAudit.ts",
+    "score": "node --experimental-strip-types src/contract/scoreContractCli.ts",
+    "frameworks:list": "node --experimental-strip-types src/frameworks/listFrameworkSupport.ts",
+    "bench:run": "node --experimental-strip-types bench/runAudit.ts",
+    "bench:compare": "node --experimental-strip-types bench/compare.ts",
+    "bench:summarize": "node --experimental-strip-types bench/summarize.ts",
+    "bench:analyze": "node --experimental-strip-types bench/analyze.ts",
+    "test": "node --experimental-strip-types --test --test-concurrency=1",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ngraph.graph": "^20.1.2",
+    "ngraph.leiden": "^0.3.0",
+    "tree-sitter": "0.21.1",
+    "tree-sitter-javascript": "0.23.1",
+    "tree-sitter-python": "0.21.0",
+    "tree-sitter-typescript": "0.23.2",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "typescript": "5.9.3"
+  }
+}

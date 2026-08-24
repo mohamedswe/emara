@@ -1,0 +1,12 @@
+node_modules/
+.env
+
+# Generated auditor artifacts (graphs and contracts are outputs, not source)
+audit-results/
+graphify-out/
+graph.json
+contract.yaml
+
+benchmark-results/
+data-analysis/
+examples/

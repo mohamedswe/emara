@@ -1,0 +1,16 @@
+.git
+.github
+.env
+.env.*
+node_modules
+audit-output
+audit-results
+benchmark-results
+data-analysis
+graphify-out
+examples
+docs
+bench
+**/*.test.mjs
+**/*.tmp
+*.log

@@ -1,0 +1,154 @@
+{
+  "schema": "functionality-oracle/v1",
+  "target": "AI-tutor",
+  "repositoryCommit": "14d1fdbebb381ba7ccdf94bb6c63611af437a870",
+  "coverage": {
+    "recognizedEntrypoints": 21,
+    "minimumDocumentationPromises": 55,
+    "requiredDocumentationPatterns": [
+      "Auth callback flow",
+      "Parse PDFs and other document formats",
+      "Redis/Celery-ready background job stack",
+      "React Query"
+    ]
+  },
+  "requiredFeatures": [
+    {
+      "key": "auth-sign-up",
+      "acceptableIds": [],
+      "titlePatterns": ["sign.?up", "Sign Up"],
+      "entrypointPatterns": ["api/auth"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "auth.py implements POST /api/auth/signup and the frontend ships SignupForm."
+    },
+    {
+      "key": "auth-sign-in",
+      "acceptableIds": [],
+      "titlePatterns": ["sign.?in(?!g)", "Sign In"],
+      "entrypointPatterns": ["api/auth"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "auth.py implements POST /api/auth/signin and the frontend ships LoginForm."
+    },
+    {
+      "key": "auth-callback",
+      "acceptableIds": [],
+      "titlePatterns": ["Auth Callback"],
+      "entrypointPatterns": ["auth/callback"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "README documents the Auth callback flow and app/auth/callback/page.tsx implements it (token exchange into Zustand store)."
+    },
+    {
+      "key": "dashboard-chat-ui",
+      "acceptableIds": [],
+      "titlePatterns": ["Dashboard"],
+      "entrypointPatterns": ["dashboard"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "README promises a dashboard with files and interactive chat; app/dashboard/page.tsx renders ChatInterface, FilesPanel, and Sidebar."
+    },
+    {
+      "key": "document-upload",
+      "acceptableIds": [],
+      "titlePatterns": ["Upload Document"],
+      "entrypointPatterns": ["documents"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "POST /documents/upload validates extensions, stores to Supabase, and creates a DB record."
+    },
+    {
+      "key": "document-list",
+      "acceptableIds": [],
+      "titlePatterns": ["List Documents", "Get Documents"],
+      "entrypointPatterns": ["documents"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "Document list endpoints exist, filtered by user_id."
+    },
+    {
+      "key": "document-delete",
+      "acceptableIds": [],
+      "titlePatterns": ["Delete Document"],
+      "entrypointPatterns": ["documents"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "Delete endpoint exists and checks user ownership before deleting."
+    },
+    {
+      "key": "subjects-crud",
+      "acceptableIds": [],
+      "titlePatterns": ["Subject"],
+      "entrypointPatterns": ["subjects"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "Full subjects CRUD (create/list/get/update/delete) exists with ownership filtering."
+    },
+    {
+      "key": "rag-chat",
+      "acceptableIds": [],
+      "titlePatterns": ["Chat Endpoint"],
+      "entrypointPatterns": ["chat"],
+      "allowedStatuses": ["PARTIALLY_IMPLEMENTED", "AMBIGUOUS"],
+      "reason": "Chat pipeline (embedding -> match_chunks RPC -> context -> GPT) is fully coded, but the match_chunks pgvector function has no SQL/migration in the repo and the code falls back to an empty result when it is missing."
+    },
+    {
+      "key": "non-pdf-ingestion",
+      "acceptableIds": [],
+      "titlePatterns": ["non.PDF", "other document"],
+      "documentationPatterns": ["Parse PDFs and other document formats"],
+      "allowedStatuses": ["PARTIALLY_IMPLEMENTED"],
+      "reason": "ALLOWED_EXTENSIONS accepts .docx/.pptx/.mp3, but document_service only schedules processing when file_type == 'pdf' (line 109) - non-PDF files are stored but never parsed."
+    },
+    {
+      "key": "redis-celery-stack",
+      "acceptableIds": [],
+      "titlePatterns": ["Redis", "Celery", "background"],
+      "documentationPatterns": ["Redis/Celery-ready background job stack"],
+      "allowedStatuses": ["DOCUMENTED_NOT_IMPLEMENTED"],
+      "reason": "celery and redis appear in requirements.txt only. Zero broker/worker/task code exists anywhere in the repo; actual background work uses FastAPI BackgroundTasks. The claimed stack is documented but not implemented."
+    },
+    {
+      "key": "root-app-entry",
+      "acceptableIds": [],
+      "titlePatterns": ["Home Page", "Root"],
+      "entrypointPatterns": ["frontend/app/page.tsx"],
+      "allowedStatuses": ["DOCUMENTED_NOT_IMPLEMENTED"],
+      "reason": "The README headline promises the AI Tutor dashboard/chat app, but the root route frontend/app/page.tsx is still the stock create-next-app starter page (Next.js logo, 'To get started, edit the page.tsx') with no link to auth or dashboard. The app entry point is documented but not implemented."
+    },
+    {
+      "key": "phantom-frontend-packages",
+      "acceptableIds": [],
+      "titlePatterns": ["React Query", "Dropzone", "Markdown"],
+      "documentationPatterns": ["React Query", "Dropzone", "Markdown"],
+      "allowedStatuses": ["DOCUMENTED_NOT_IMPLEMENTED"],
+      "reason": "README lists the frontend stack including React Query, React Dropzone, and React Markdown, and all three are declared in frontend/package.json, but no source file imports or uses any of them. Declared, documented, not implemented."
+    }
+  ],
+  "requiredDeadCode": [
+    {
+      "key": "unused-file-upload-component",
+      "file": "frontend/components/dashboard/FileUpload.tsx",
+      "symbol": "FileUpload",
+      "allowedVerdicts": ["CANDIDATE", "VALIDATION_REQUIRED"]
+    },
+    {
+      "key": "unused-user-response-import",
+      "file": "backend/app/services/auth_service.py",
+      "symbol": "UserResponse",
+      "allowedVerdicts": ["CANDIDATE", "VALIDATION_REQUIRED"]
+    }
+  ],
+  "forbiddenDocumentationMappings": [
+    {
+      "key": "layout-is-not-api-wrapper",
+      "featurePatterns": ["layout"],
+      "documentationPatterns": ["API client wrapper"],
+      "reason": "An API client utility does not explicitly document root-layout behavior."
+    },
+    {
+      "key": "root-directory-is-not-root-endpoint",
+      "featurePatterns": ["root.*endpoint", "backend.*root"],
+      "documentationPatterns": ["Root directory"],
+      "reason": "A repository directory label does not document HTTP root-endpoint behavior."
+    }
+  ],
+  "performanceBudgets": {
+    "deterministicColdWallClockMs": 30000,
+    "assistedColdWallClockMs": 60000,
+    "maximumModelRequests": 2
+  }
+}

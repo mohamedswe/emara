@@ -1,0 +1,95 @@
+{
+  "schema": "functionality-oracle/v1",
+  "target": "AI-tutor",
+  "repositoryCommit": "14d1fdbebb381ba7ccdf94bb6c63611af437a870",
+  "coverage": {
+    "recognizedEntrypoints": 21,
+    "minimumDocumentationPromises": 26,
+    "requiredDocumentationPatterns": [
+      "Auth callback flow",
+      "Parse other document formats",
+      "Redis.*Celery-ready"
+    ]
+  },
+  "requiredFeatures": [
+    {
+      "key": "email-confirmation-callback",
+      "acceptableIds": ["auth-callback", "email-confirmation-callback"],
+      "titlePatterns": ["email.*confirmation.*callback", "auth.*callback"],
+      "documentationPatterns": ["Auth callback flow"],
+      "entrypointPatterns": ["/auth/callback"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "README.md explicitly lists the Auth callback flow and the callback page implements it."
+    },
+    {
+      "key": "pdf-processing",
+      "acceptableIds": ["pdf-processing", "pdf-processing-rag-ingestion"],
+      "titlePatterns": ["PDF.*processing", "processing.*PDF"],
+      "documentationPatterns": ["Parse PDFs"],
+      "implementationNodePatterns": ["PDFProcessor\\.process_document"],
+      "allowedStatuses": ["IMPLEMENTED_DOCUMENTED"],
+      "reason": "PDF parsing, chunking, and embedding code exists and is documented."
+    },
+    {
+      "key": "non-pdf-ingestion",
+      "acceptableIds": ["non-pdf-ingestion", "non-pdf-document-ingestion"],
+      "titlePatterns": ["non-PDF.*(?:ingestion|parsing)", "DOCX.*PPTX.*MP3", "other document formats"],
+      "allowedStatuses": ["DOCUMENTED_NOT_IMPLEMENTED"],
+      "reason": "DOCX, PPTX, and MP3 are accepted, but only PDF processing is scheduled."
+    },
+    {
+      "key": "semantic-retrieval",
+      "acceptableIds": ["semantic-retrieval", "semantic-retrieval-chat"],
+      "titlePatterns": ["semantic.*retrieval", "RAG.*chat"],
+      "allowedStatuses": ["PARTIALLY_IMPLEMENTED", "AMBIGUOUS"],
+      "reason": "The application calls match_chunks, but the required database function is absent from the repository."
+    },
+    {
+      "key": "redis-celery-background-stack",
+      "acceptableIds": ["redis-celery-background-stack", "background-job-stack"],
+      "titlePatterns": ["Redis.*Celery", "background.*(?:job|worker).*stack"],
+      "allowedStatuses": ["PARTIALLY_IMPLEMENTED", "DOCUMENTED_NOT_IMPLEMENTED"],
+      "reason": "Dependencies are present, but no broker, worker, task, or runtime configuration implements the documented stack."
+    },
+    {
+      "key": "authorization-ownership",
+      "acceptableIds": ["authorization-ownership", "authorization-and-ownership"],
+      "titlePatterns": ["authorization.*ownership", "ownership.*(?:check|control)"],
+      "allowedStatuses": ["IMPLEMENTED_UNDOCUMENTED"],
+      "reason": "Ownership checks are implemented but not explicitly promised as a product feature."
+    }
+  ],
+  "requiredDeadCode": [
+    {
+      "key": "unused-file-upload-component",
+      "file": "frontend/components/dashboard/FileUpload.tsx",
+      "symbol": "FileUpload",
+      "allowedVerdicts": ["CANDIDATE", "VALIDATION_REQUIRED"]
+    },
+    {
+      "key": "unused-user-response-import",
+      "file": "backend/app/services/auth_service.py",
+      "symbol": "UserResponse",
+      "allowedVerdicts": ["CANDIDATE", "VALIDATION_REQUIRED"]
+    }
+  ],
+  "forbiddenDocumentationMappings": [
+    {
+      "key": "layout-is-not-api-wrapper",
+      "featurePatterns": ["layout"],
+      "documentationPatterns": ["API client wrapper"],
+      "reason": "An API client utility does not explicitly document root-layout behavior."
+    },
+    {
+      "key": "root-directory-is-not-root-endpoint",
+      "featurePatterns": ["root.*endpoint", "backend.*root"],
+      "documentationPatterns": ["Root directory"],
+      "reason": "A repository directory label does not document HTTP root-endpoint behavior."
+    }
+  ],
+  "performanceBudgets": {
+    "deterministicColdWallClockMs": 10000,
+    "assistedColdWallClockMs": 60000,
+    "maximumModelRequests": 2
+  }
+}
