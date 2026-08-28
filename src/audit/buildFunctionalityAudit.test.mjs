@@ -817,12 +817,11 @@ test("skips decoration cleanly in deterministic mode", async (context) => {
 
   assert.equal(first.metrics.modelRequests, 0);
   assert.equal(first.metrics.totalTokens, 0);
+  assert.equal(first.metrics.wallClockMs, 0);
+  assert.equal(first.metrics.deterministicWallClockMs, 0);
   assert.deepEqual(first.limitations, []);
   assert.deepEqual(semanticPasses, []);
-  assert.deepEqual(first.features, second.features);
-  assert.deepEqual(first.documentationPromises, second.documentationPromises);
-  assert.deepEqual(first.deadCodeCandidates, second.deadCodeCandidates);
-  assert.deepEqual(first.coverage, second.coverage);
+  assert.deepEqual(first, second);
 });
 
 test("audits CLI and library modules when no external entrypoint exists", async (context) => {

@@ -49,7 +49,11 @@ const TYPE_DECLARATION_TYPES = new Set([
   "interface_declaration",
   "type_alias_declaration",
 ]);
-const REACT_DOM_BOOTSTRAP_METHODS = new Set(["createRoot", "hydrateRoot"]);
+const REACT_DOM_BOOTSTRAP_METHODS = new Set([
+  "createRoot",
+  "hydrateRoot",
+  "render",
+]);
 const REACT_DOM_MODULES = new Set(["react-dom", "react-dom/client"]);
 const PARSER_INPUT_CHUNK_SIZE = 16_384;
 
@@ -785,7 +789,7 @@ function extractEntryPoints(
     ...exportedLifecycleEntryPoints(filePath, symbols, exports, conventions),
   );
   entrypoints.push(...startupSymbolEntryPoints(symbols, conventions));
-  entrypoints.push(...reactDomBootstrapEntryPoints(rootNode, imports));
+  entrypoints.push(...reactDomBootstrapEntryPoints(rootNode, imports, symbols));
   entrypoints.push(...fileRouteEntryPoints(filePath, symbols, exports));
 
   const seen = new Set<string>();
@@ -1553,6 +1557,7 @@ function startupSymbolEntryPoints(
 function reactDomBootstrapEntryPoints(
   rootNode: Parser.SyntaxNode,
   imports: readonly ParsedImport[],
+  symbols: readonly ParsedSymbol[],
 ): ParsedEntryPoint[] {
   return rootNode.descendantsOfType("call_expression").flatMap((callNode) => {
     const calleeNode = callNode.childForFieldName("function");
@@ -1560,10 +1565,15 @@ function reactDomBootstrapEntryPoints(
       ? undefined
       : reactDomBootstrapMethod(callNode, calleeNode, imports);
     if (method === undefined) return [];
+    const handlerName = method === "render"
+      ? reactDomRenderComponentName(callNode, imports, symbols)
+      : undefined;
+    if (method === "render" && handlerName === undefined) return [];
     return [{
       kind: "startup" as const,
       name: `React ${method}`,
       exposure: "startup" as const,
+      ...(handlerName === undefined ? {} : { handlerName }),
       lineRange: toLineRange(callNode),
     }];
   });
@@ -1588,7 +1598,7 @@ function reactDomBootstrapMethod(
     const matches = imports.filter(
       (parsedImport) =>
         !parsedImport.typeOnly &&
-        REACT_DOM_MODULES.has(parsedImport.source) &&
+        reactDomModuleSupportsMethod(parsedImport.source, parsedImport.importedName) &&
         parsedImport.localName === localName &&
         parsedImport.importedName !== undefined &&
         REACT_DOM_BOOTSTRAP_METHODS.has(parsedImport.importedName),
@@ -1610,13 +1620,65 @@ function reactDomBootstrapMethod(
   const matches = imports.filter(
     (parsedImport) =>
       !parsedImport.typeOnly &&
-      REACT_DOM_MODULES.has(parsedImport.source) &&
+      reactDomModuleSupportsMethod(parsedImport.source, method) &&
       parsedImport.localName === receiver &&
       (parsedImport.kind === "default" ||
         parsedImport.kind === "namespace" ||
         (parsedImport.kind === "commonjs" && parsedImport.importedName === "*")),
   );
   return matches.length === 1 ? method : undefined;
+}
+
+function reactDomModuleSupportsMethod(source: string, method: string | undefined): boolean {
+  return method === "render"
+    ? source === "react-dom"
+    : REACT_DOM_MODULES.has(source);
+}
+
+function reactDomRenderComponentName(
+  callNode: Parser.SyntaxNode,
+  imports: readonly ParsedImport[],
+  symbols: readonly ParsedSymbol[],
+): string | undefined {
+  const argumentsNode = callNode.childForFieldName("arguments");
+  const firstArgument = argumentsNode?.namedChildren[0];
+  if (firstArgument === undefined) return undefined;
+
+  const componentName = firstArgument.type === "identifier"
+    ? firstArgument.text
+    : jsxRootComponentName(firstArgument);
+  if (
+    componentName === undefined ||
+    !/^\p{Lu}[\p{L}\p{N}_$]*$/u.test(componentName) ||
+    hasEnclosingCallableBinding(callNode, componentName)
+  ) {
+    return undefined;
+  }
+
+  const importedComponents = imports.filter(
+    (parsedImport) =>
+      !parsedImport.typeOnly &&
+      parsedImport.localName === componentName &&
+      (parsedImport.kind === "default" || parsedImport.kind === "named"),
+  );
+  const declaredComponents = symbols.filter(
+    (symbol) =>
+      (symbol.type === "function" || symbol.type === "class") &&
+      symbol.name === componentName,
+  );
+  return importedComponents.length + declaredComponents.length === 1
+    ? componentName
+    : undefined;
+}
+
+function jsxRootComponentName(node: Parser.SyntaxNode): string | undefined {
+  const element = node.type === "jsx_self_closing_element"
+    ? node
+    : node.type === "jsx_element"
+      ? node.namedChildren.find((child) => child.type === "jsx_opening_element")
+      : undefined;
+  const nameNode = element?.childForFieldName("name");
+  return nameNode?.type === "identifier" ? nameNode.text : undefined;
 }
 
 function routeObjectEntryPoint(

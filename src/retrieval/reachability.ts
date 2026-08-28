@@ -86,7 +86,9 @@ const PRODUCT_TRAVERSAL_EDGE_TYPES = new Set([
 const REACT_BOOTSTRAP_ENTRYPOINT_NAMES = new Set([
   "React createRoot",
   "React hydrateRoot",
+  "React render",
 ]);
+const LEGACY_REACT_RENDER_ENTRYPOINT_NAME = "React render";
 const validatedGraphs = new WeakSet<RepositoryGraph>();
 const graphIndexes = new WeakMap<RepositoryGraph, ReachabilityGraphIndex>();
 
@@ -284,19 +286,50 @@ function buildExternalRoots(graph: RepositoryGraph): Set<string> {
 }
 
 function buildInternalRoots(graph: RepositoryGraph): Set<string> {
-  return new Set(
-    graph.entrypoints
-      .filter((entrypoint) => entrypoint.exposure === "startup")
-      .flatMap((entrypoint) => [
-        entrypoint.id,
-        ...(REACT_BOOTSTRAP_ENTRYPOINT_NAMES.has(entrypoint.name)
-          ? [entrypoint.fileId]
-          : []),
-        ...(entrypoint.handlerSymbolId === undefined
-          ? []
-          : [entrypoint.handlerSymbolId]),
-      ]),
-  );
+  const roots = new Set<string>();
+  const symbolsById = new Map(graph.symbols.map((symbol) => [symbol.id, symbol]));
+
+  for (const entrypoint of graph.entrypoints) {
+    if (entrypoint.exposure !== "startup") continue;
+    roots.add(entrypoint.id);
+    if (REACT_BOOTSTRAP_ENTRYPOINT_NAMES.has(entrypoint.name)) {
+      roots.add(entrypoint.fileId);
+    }
+    if (entrypoint.handlerSymbolId !== undefined) {
+      roots.add(entrypoint.handlerSymbolId);
+    }
+    if (entrypoint.name !== LEGACY_REACT_RENDER_ENTRYPOINT_NAME) continue;
+
+    const renderedComponents = graph.edges
+      .filter(
+        (edge) =>
+          edge.type === "REFERENCES" &&
+          edge.source === entrypoint.fileId &&
+          edge.evidence.extractor === "tree-sitter" &&
+          edge.evidence.file === entrypoint.evidence.file &&
+          edge.evidence.line === entrypoint.lineRange.start,
+      )
+      .flatMap((edge) => {
+        const symbol = symbolsById.get(edge.target);
+        return symbol === undefined ? [] : [symbol];
+      });
+    const component = renderedComponents[0];
+    if (component === undefined || renderedComponents.length !== 1) continue;
+    roots.add(component.id);
+    roots.add(component.fileId);
+    if (component.type === "class") {
+      for (const symbol of graph.symbols) {
+        if (
+          symbol.fileId === component.fileId &&
+          symbol.name.startsWith(`${component.name}.`)
+        ) {
+          roots.add(symbol.id);
+        }
+      }
+    }
+  }
+
+  return roots;
 }
 
 function buildTestRoots(graph: RepositoryGraph): Set<string> {

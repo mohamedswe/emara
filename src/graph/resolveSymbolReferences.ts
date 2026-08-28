@@ -70,6 +70,48 @@ export function resolveSymbolReferenceEdges(
       }
     }
 
+    for (const entrypoint of parsedFile.entrypoints) {
+      if (
+        entrypoint.name !== "React render" ||
+        entrypoint.handlerName === undefined
+      ) {
+        continue;
+      }
+      const fileSymbols = symbolsByFileId.get(sourceFile.id) ?? [];
+      const localTarget = uniqueReactComponent(fileSymbols, entrypoint.handlerName);
+      const importedTarget = resolveImportedReference(
+        parsedFile,
+        entrypoint.handlerName,
+        entrypoint.handlerName,
+        filePaths,
+        filesByPath,
+        parsedFilesByPath,
+        symbolsByFileId,
+        options,
+      );
+      const targets = [localTarget, importedTarget].filter(
+        (target): target is SymbolNode => target !== undefined,
+      );
+      const target = targets[0];
+      if (target === undefined || targets.length !== 1) continue;
+
+      const edge: Edge = {
+        source: sourceFile.id,
+        target: target.id,
+        type: "REFERENCES",
+        evidence: {
+          file: parsedFile.path,
+          line: entrypoint.lineRange.start,
+          extractor: "tree-sitter",
+        },
+      };
+      const key = edgeKey(edge);
+      if (!keys.has(key)) {
+        keys.add(key);
+        edges.push(edge);
+      }
+    }
+
     for (const reference of parsedFile.references ?? []) {
       if (reference.ownerName === undefined) continue;
       const fileSymbols = symbolsByFileId.get(sourceFile.id) ?? [];
@@ -195,6 +237,18 @@ function uniqueSymbol(
   name: string,
 ): SymbolNode | undefined {
   const candidates = symbols.filter((symbol) => symbol.name === name);
+  return candidates.length === 1 ? candidates[0] : undefined;
+}
+
+function uniqueReactComponent(
+  symbols: readonly SymbolNode[],
+  name: string,
+): SymbolNode | undefined {
+  const candidates = symbols.filter(
+    (symbol) =>
+      (symbol.type === "function" || symbol.type === "class") &&
+      symbol.name === name,
+  );
   return candidates.length === 1 ? candidates[0] : undefined;
 }
 

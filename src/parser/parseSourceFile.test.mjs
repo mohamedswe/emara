@@ -761,6 +761,61 @@ test("detects React DOM createRoot and hydrateRoot bootstraps as startup entrypo
   assert.deepEqual(shadowed.entrypoints, []);
 });
 
+test("detects legacy ReactDOM.render only for resolved component arguments", () => {
+  const importedComponent = parseSourceFile(
+    "web/src/index.js",
+    [
+      'import ReactDOM from "react-dom";',
+      'import App from "./App";',
+      'ReactDOM.render(<App />, document.getElementById("root"));',
+    ].join("\n"),
+  );
+  const declaredComponent = parseSourceFile(
+    "web/src/bootstrap.jsx",
+    [
+      'import { render as mount } from "react-dom";',
+      "function App() { return <main />; }",
+      "mount(App);",
+    ].join("\n"),
+  );
+  const unsupported = [
+    [
+      'import ReactDOM from "react-dom";',
+      'import App from "./App";',
+      'ReactDOM.render("App", document.body);',
+    ],
+    [
+      'import ReactDOM from "react-dom";',
+      'ReactDOM.render(<Missing />, document.body);',
+    ],
+    [
+      'import ReactDOM from "react-dom/client";',
+      'import App from "./App";',
+      'ReactDOM.render(<App />, document.body);',
+    ],
+    [
+      'import ReactDOM from "./react-dom-shim";',
+      'import App from "./App";',
+      'ReactDOM.render(<App />, document.body);',
+    ],
+    [
+      'import ReactDOM from "react-dom";',
+      'import App from "./App";',
+      "function mount(App) { ReactDOM.render(<App />, document.body); }",
+    ],
+  ].map((source, index) =>
+    parseSourceFile(`web/src/unsupported-${index}.jsx`, source.join("\n"))
+  );
+
+  assert.deepEqual(importedComponent.entrypoints, [
+    entrypoint("startup", "React render", 3, "App"),
+  ]);
+  assert.deepEqual(declaredComponent.entrypoints, [
+    entrypoint("startup", "React render", 3, "App"),
+  ]);
+  for (const parsed of unsupported) assert.deepEqual(parsed.entrypoints, []);
+});
+
 test("uses server factory provenance even when the receiver has a generic name", () => {
   const parsed = parseSourceFile(
     "server/routes.ts",

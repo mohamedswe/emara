@@ -206,6 +206,84 @@ test("roots React bootstrap files and their rendered component trees", async (co
   }
 });
 
+test("roots legacy ReactDOM.render component files and class component methods", async (context) => {
+  const repositoryPath = await mkdtemp(join(tmpdir(), "reachability-react-render-"));
+  context.after(() => rm(repositoryPath, { recursive: true, force: true }));
+  await writeFixture(
+    repositoryPath,
+    "web/src/index.jsx",
+    [
+      'import ReactDOM from "react-dom";',
+      'import App from "./App.jsx";',
+      'ReactDOM.render(<App />, document.getElementById("root"));',
+    ].join("\n"),
+  );
+  await writeFixture(
+    repositoryPath,
+    "web/src/App.jsx",
+    [
+      'import BookingModal from "./BookingModal.jsx";',
+      'import { signIn, signOut } from "./auth.js";',
+      "export default class App {",
+      "  authenticate() { return signIn(); }",
+      "  signOut() { return signOut(); }",
+      "  render() { return <BookingModal />; }",
+      "}",
+    ].join("\n"),
+  );
+  await writeFixture(
+    repositoryPath,
+    "web/src/BookingModal.jsx",
+    "export default function BookingModal() { return <aside />; }",
+  );
+  await writeFixture(
+    repositoryPath,
+    "web/src/auth.js",
+    [
+      'import { decodeToken } from "./token.js";',
+      "export function signIn() { return decodeToken(); }",
+      "export function signOut() {}",
+    ].join("\n"),
+  );
+  await writeFixture(
+    repositoryPath,
+    "web/src/token.js",
+    "export function decodeToken() { return null; }",
+  );
+
+  const { graph } = await indexRepository(repositoryPath);
+  assert.equal(
+    graph.entrypoints.some((entrypoint) =>
+      entrypoint.kind === "startup" &&
+      entrypoint.name === "React render" &&
+      entrypoint.fileId === "file:web/src/index.jsx"
+    ),
+    true,
+  );
+  assert.equal(
+    graph.edges.some((edge) =>
+      edge.source === "file:web/src/index.jsx" &&
+      edge.target === "class:web/src/App.jsx:App" &&
+      edge.type === "REFERENCES" &&
+      edge.evidence.line === 3 &&
+      edge.evidence.extractor === "tree-sitter"
+    ),
+    true,
+  );
+  for (const id of [
+    "class:web/src/App.jsx:App",
+    "function:web/src/App.jsx:App.authenticate",
+    "function:web/src/App.jsx:App.signOut",
+    "function:web/src/App.jsx:App.render",
+    "function:web/src/BookingModal.jsx:BookingModal",
+    "function:web/src/auth.js:signIn",
+    "function:web/src/auth.js:signOut",
+    "function:web/src/token.js:decodeToken",
+  ]) {
+    assert.equal(isReachable(graph, id).status, "internally_reachable", id);
+  }
+});
+
 test("roots node package scripts through transitive CommonJS imports", async (context) => {
   const repositoryPath = await mkdtemp(join(tmpdir(), "reachability-node-script-"));
   context.after(() => rm(repositoryPath, { recursive: true, force: true }));

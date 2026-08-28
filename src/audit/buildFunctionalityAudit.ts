@@ -414,10 +414,12 @@ export async function buildFunctionalityAudit(
       },
     },
     metrics: {
-      wallClockMs: finishedAt - startedAt,
+      wallClockMs: options.deterministic ? 0 : finishedAt - startedAt,
       deterministicWallClockMs:
-        deterministicReadyAt - startedAt +
-        (finishedAt - deterministicReadyAt - totals.modelWallClockMs),
+        options.deterministic
+          ? 0
+          : deterministicReadyAt - startedAt +
+            (finishedAt - deterministicReadyAt - totals.modelWallClockMs),
       modelRequests: totals.requests,
       promptTokens: totals.promptTokens,
       completionTokens: totals.completionTokens,
