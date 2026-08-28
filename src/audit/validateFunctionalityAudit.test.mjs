@@ -108,6 +108,7 @@ function validAudit() {
       id: "dead:unused",
       nodeIds: ["function:unused"],
       file: "src/unused.ts",
+      line: 7,
       symbol: "unused",
       reachabilityStatus: "disconnected_candidate",
       verdict: "VALIDATION_REQUIRED",

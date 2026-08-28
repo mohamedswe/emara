@@ -7,6 +7,7 @@ import { afterEach, test } from "node:test";
 import { indexRepository } from "../graph/indexRepository.ts";
 import {
   buildContractDiscoveryBrief,
+  isDocumentationBoilerplateClaim,
   isProductDocumentationSourcePath,
 } from "./discoveryBrief.ts";
 import { createContractDiscoveryTools } from "./discoveryTools.ts";
@@ -195,6 +196,43 @@ test("extracts complete Markdown-free paragraph claims", async () => {
     "The dead-code pass finds candidates. It never deletes them automatically.",
   ]);
   assert.ok(claims.every((claim) => !/[`*_\[\]]/u.test(claim)));
+});
+
+test("filters build-tool boilerplate while preserving real product claims", async (context) => {
+  const repositoryPath = await mkdtemp(join(tmpdir(), "contract-boilerplate-filter-"));
+  context.after(() => rm(repositoryPath, { recursive: true, force: true }));
+  await writeFixture(
+    repositoryPath,
+    "README.md",
+    [
+      "# Features",
+      "- In order to reserve a room, as a teacher, I want the application to allow me to choose an available time.",
+      "- [x] Staff can manage room bookings.",
+      "- The room-booking service allows staff, teachers, and students to reserve forty rooms across two floors.",
+      "- Create React App will install the newest react-scripts release.",
+      "- Webpack finds all relative module references in CSS.",
+      "- Run npm run build after npm start.",
+      "- You do not have to ever use eject.",
+      "- Create React App substitutes %PUBLICURL% during builds.",
+      "- Run watch-css and build-css for Sass compilation.",
+      "- Rename src/App.css to src/App.scss.",
+      "- Dependencies are installed under node_modules.",
+    ].join("\n"),
+  );
+  const { graph } = await indexRepository(repositoryPath);
+  const tools = createContractDiscoveryTools(graph, repositoryPath);
+  const result = await buildContractDiscoveryBrief(graph, tools);
+  const claims = result.brief.documentedPromiseExcerpts;
+
+  assert.deepEqual(
+    claims.map((claim) => claim.text),
+    [
+      "In order to reserve a room, as a teacher, I want the application to allow me to choose an available time.",
+      "[x] Staff can manage room bookings.",
+      "The room-booking service allows staff, teachers, and students to reserve forty rooms across two floors.",
+    ],
+  );
+  assert.ok(claims.every((claim) => !isDocumentationBoilerplateClaim(claim.text)));
 });
 
 test("extracts structured claims from documentation fences but skips source fences", async () => {

@@ -6,6 +6,7 @@ import type { ContractDiscoveryModel, ContractModelResponse } from "../contract/
 import {
   buildContractDiscoveryBrief,
   extractProductCopyPromiseExcerpts,
+  isDocumentationBoilerplateClaim,
   isProductCopySourcePath,
 } from "../contract/discoveryBrief.ts";
 import { createContractDiscoveryTools } from "../contract/discoveryTools.ts";
@@ -234,11 +235,13 @@ export async function buildFunctionalityAudit(
     repositoryPath,
     options.indexedSourceFiles,
   );
-  const promises = await supplementProductCopyPromises(
-    discovery.brief.documentedPromiseExcerpts,
-    graph,
-    repositoryPath,
-  );
+  const promises = (
+    await supplementProductCopyPromises(
+      discovery.brief.documentedPromiseExcerpts,
+      graph,
+      repositoryPath,
+    )
+  ).filter((promise) => !isDocumentationBoilerplateClaim(promise.text));
   const featurePromises = promises.filter((promise) =>
     !isNonProductDocumentationClaim(promise)
   );

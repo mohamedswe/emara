@@ -62,6 +62,7 @@ export interface DeadCodeCandidate {
   id: string;
   nodeIds: string[];
   file: string;
+  line: number;
   symbol: string;
   reachabilityStatus: ProductReachabilityStatus;
   verdict: DeadCodeVerdict;

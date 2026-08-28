@@ -82,6 +82,7 @@ export async function findMechanicalDeadCodeCandidates(
       id,
       nodeIds: finding.nodeIds,
       file: finding.file,
+      line: finding.line,
       symbol: finding.symbol,
       reachabilityStatus: "disconnected_candidate",
       verdict: "VALIDATION_REQUIRED",

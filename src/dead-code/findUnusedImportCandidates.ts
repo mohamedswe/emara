@@ -66,6 +66,7 @@ export async function findUnusedImportCandidates(
         id: `dead-import:${file.path}:${binding}`,
         nodeIds: [],
         file: file.path,
+        line: imported.lineRange.start,
         symbol: binding,
         reachabilityStatus: "disconnected_candidate",
         verdict: "VALIDATION_REQUIRED",

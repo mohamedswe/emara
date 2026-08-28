@@ -10,3 +10,5 @@ contract.yaml
 benchmark-results/
 data-analysis/
 examples/
+env.exe.stackdump
+yarn-error.log

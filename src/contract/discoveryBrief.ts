@@ -63,6 +63,8 @@ const PRODUCT_COPY_SIGNAL =
   /\b(?:allow|book|car|client|customer|document|fleet|income|login|maintain|manage|maintenance|monitor|profile|provide|register|rental|report|schedule|statement|track|vehicle|analytic)\w*\b/iu;
 const NON_PROMISE_PRODUCT_COPY_SIGNAL =
   /\b(?:collect\s+information|cookie|error|fail(?:ed|ure)?|information\s+you\s+provide|liability|personal\s+information|privacy|terms\s+of\s+service|third[- ]party|please\s+try|successfully)\b/iu;
+const DOCUMENTATION_BOILERPLATE_CLAIM_SIGNAL =
+  /(?:\bcreate[- ]react[- ]app\b|\breact[- ]scripts\b|\bwebpack\b|\bnpm\s+(?:run|start)\b|\beject\b|%PUBLICURL%|\b(?:watch|build)-css\b|\bsrc\/App(?:\.[A-Za-z0-9]+)?\b|\bnode_?modules\b)/iu;
 
 export interface ContractDiscoveryBrief {
   purpose: string;
@@ -262,7 +264,8 @@ export async function buildContractDiscoveryBrief(
       (left, right) =>
         compareText(left.path, right.path) || left.line - right.line,
     )
-    .slice(0, MAX_PROMISE_EXCERPTS);
+    .slice(0, MAX_PROMISE_EXCERPTS)
+    .filter((excerpt) => !isDocumentationBoilerplateClaim(excerpt.text));
   const featureClustering = clusterRepositoryFeatures(graph, {
     documentationSeeds: boundedExcerpts.map((excerpt) => ({
       id: excerpt.id,
@@ -582,6 +585,11 @@ export function extractProductCopyPromiseExcerpts(
     }
   }
   return result;
+}
+
+/** Build-tool tutorials and generated scaffold instructions are not product claims. */
+export function isDocumentationBoilerplateClaim(text: string): boolean {
+  return DOCUMENTATION_BOILERPLATE_CLAIM_SIGNAL.test(text);
 }
 
 function quotedStringValues(line: string): string[] {

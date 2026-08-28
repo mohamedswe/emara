@@ -223,6 +223,11 @@ export function validateFunctionalityAudit(audit: FunctionalityAudit): void {
     }
   }
   for (const candidate of audit.deadCodeCandidates) {
+    if (!Number.isSafeInteger(candidate.line) || candidate.line <= 0) {
+      issues.push(
+        `dead-code candidate ${JSON.stringify(candidate.id)} has invalid source line`,
+      );
+    }
     validateDeletionEvidence(candidate, issues);
   }
   const metrics = audit.metrics;

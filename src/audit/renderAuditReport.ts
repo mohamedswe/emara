@@ -34,10 +34,34 @@ export async function renderAuditReportFromJson(
 
 export function renderAuditReport(audit: FunctionalityAudit): string {
   validateFunctionalityAudit(audit);
+  const readyCandidates = audit.deadCodeCandidates
+    .filter((candidate) => candidate.verdict === "VALIDATION_REQUIRED")
+    .sort(
+      (left, right) =>
+        compareText(left.file, right.file) ||
+        left.line - right.line ||
+        compareText(left.symbol, right.symbol),
+    )
+    .slice(0, 5);
   const lines: string[] = [
     "# Functionality Audit Report",
     "",
     `Repository commit: \`${inlineCode(audit.repositoryCommit)}\``,
+    "",
+    "## Takeover Summary",
+    "",
+    `The audit records ${counted(audit.summary.implemented_documented, "implemented and documented feature")}, ${counted(audit.summary.implemented_undocumented, "implemented but undocumented feature")}, ${counted(audit.summary.partially_implemented, "partially implemented feature")}, and ${counted(audit.summary.documented_not_implemented, "documented but not implemented feature")}. It also identifies ${counted(audit.summary.dead_code_candidates, "dead-code candidate")}, with ${audit.summary.ready_for_delete_validation} ready for delete validation.`,
+    "",
+    "### Dead code ready to validate",
+    "",
+    ...(readyCandidates.length === 0
+      ? ["None."]
+      : readyCandidates.map(
+        (candidate) =>
+          `- \`${inlineCode(candidate.file)}:${candidate.line}\` — \`${inlineCode(candidate.symbol)}\``,
+      )),
+    "",
+    "Use this evidence for codebase takeover, fixed-price quoting, billed dead-code cleanup, and a handoff deliverable.",
     "",
     "## Summary",
     "",
@@ -129,6 +153,10 @@ function inlineCode(value: string): string {
 
 function plainText(value: string): string {
   return value.replaceAll("\r", " ").replaceAll("\n", " ").trim();
+}
+
+function counted(value: number, singular: string): string {
+  return `${value} ${singular}${value === 1 ? "" : "s"}`;
 }
 
 function compareText(left: string, right: string): number {

@@ -46,8 +46,8 @@ test("finds an unused Python import without promoting it to safe deletion", asyn
   assert.deepEqual(candidates, uncachedCandidates);
 
   assert.deepEqual(
-    candidates.map((candidate) => [candidate.file, candidate.symbol]),
-    [["app.py", "UserResponse"]],
+    candidates.map((candidate) => [candidate.file, candidate.line, candidate.symbol]),
+    [["app.py", 1, "UserResponse"]],
   );
   assert.equal(candidates[0]?.verdict, "VALIDATION_REQUIRED");
   assert.equal(candidates[0]?.validation, null);

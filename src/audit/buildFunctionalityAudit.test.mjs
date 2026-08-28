@@ -6,6 +6,7 @@ import { test } from "node:test";
 
 import { indexRepository } from "../graph/indexRepository.ts";
 import { clusterRepositoryFeatures } from "../features/clusterRepositoryFeatures.ts";
+import { isDocumentationBoilerplateClaim } from "../contract/discoveryBrief.ts";
 import {
   applyDeterministicClaimEvidence,
   applyUnresolvedExternalContracts,
@@ -901,6 +902,48 @@ test("quarantines unmatched documentation claims instead of promoting fake featu
       (promise) => promise.id === claim.documentationPromiseId,
     ),
     false,
+  );
+});
+
+test("keeps documentation boilerplate out of promises, declared claims, and features", async (context) => {
+  const repositoryPath = await fixtureRepository(context);
+  await writeFixture(
+    repositoryPath,
+    "README.md",
+    [
+      "# Features",
+      "- The service must expose a health check.",
+      "- When you run npm run build, Create React App substitutes %PUBLICURL%.",
+      "- Webpack finds relative module references inside src/App.css.",
+      "- You do not have to ever use eject or inspect node_modules.",
+    ].join("\n"),
+  );
+  const { graph } = await indexRepository(repositoryPath);
+
+  const audit = await buildFunctionalityAudit(
+    graph,
+    repositoryPath,
+    undefined,
+    { repositoryCommit: "fixture-commit", deterministic: true },
+  );
+
+  assert.ok(
+    audit.documentationPromises.some((promise) => /health check/iu.test(promise.text)),
+  );
+  assert.ok(
+    audit.documentationPromises.every((promise) =>
+      !isDocumentationBoilerplateClaim(promise.text)
+    ),
+  );
+  assert.ok(
+    audit.declaredClaims.every((claim) =>
+      !isDocumentationBoilerplateClaim(claim.text)
+    ),
+  );
+  assert.ok(
+    audit.features.every((feature) =>
+      !isDocumentationBoilerplateClaim(feature.title)
+    ),
   );
 });
 

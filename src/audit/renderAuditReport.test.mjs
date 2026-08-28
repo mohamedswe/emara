@@ -15,6 +15,16 @@ test("renders a readable report with every required section", async (context) =>
   const report = renderAuditReport(audit);
 
   assert.match(report, /\| Total features \| 2 \|/u);
+  assert.match(
+    report,
+    /^# Functionality Audit Report[\s\S]*?## Takeover Summary\n\nThe audit records 1 implemented and documented feature, 1 implemented but undocumented feature, 0 partially implemented features, and 0 documented but not implemented features\. It also identifies 1 dead-code candidate, with 1 ready for delete validation\./u,
+  );
+  assert.match(report, /### Dead code ready to validate\n\n- `src\/unused\.ts:7` — `unused`/u);
+  assert.match(
+    report,
+    /codebase takeover, fixed-price quoting, billed dead-code cleanup, and a handoff deliverable\./u,
+  );
+  assert.ok(report.indexOf("## Takeover Summary") < report.indexOf("## Summary"));
   assert.match(report, /### Implemented and documented \(1\)/u);
   assert.match(report, /### Implemented but undocumented \(1\)/u);
   assert.match(report, /Entrypoints: `entrypoint:login`/u);
@@ -28,6 +38,42 @@ test("renders a readable report with every required section", async (context) =>
   await writeFile(auditPath, `${JSON.stringify(audit)}\n`, "utf8");
   assert.equal(await renderAuditReportFromJson(auditPath), report);
 });
+
+test("shows only the deterministic top five deletion-validation candidates", () => {
+  const audit = validAudit();
+  const template = audit.deadCodeCandidates[0];
+  audit.deadCodeCandidates = [
+    template,
+    candidate(template, "dead:alpha", "src/alpha.ts", 9, "alpha"),
+    candidate(template, "dead:beta", "src/alpha.ts", 3, "beta"),
+    candidate(template, "dead:gamma", "src/gamma.ts", 2, "gamma"),
+    candidate(template, "dead:omega", "src/omega.ts", 1, "omega"),
+    candidate(template, "dead:zeta", "src/zeta.ts", 1, "zeta"),
+  ];
+  audit.summary = deriveFunctionalityAuditSummary(audit);
+
+  const report = renderAuditReport(audit);
+  const readySection = report.slice(
+    report.indexOf("### Dead code ready to validate"),
+    report.indexOf("Use this evidence for codebase takeover"),
+  );
+
+  assert.deepEqual(
+    readySection.match(/`src\/[^`]+:\d+`/gu),
+    [
+      "`src/alpha.ts:3`",
+      "`src/alpha.ts:9`",
+      "`src/gamma.ts:2`",
+      "`src/omega.ts:1`",
+      "`src/unused.ts:7`",
+    ],
+  );
+  assert.doesNotMatch(readySection, /src\/zeta\.ts/u);
+});
+
+function candidate(template, id, file, line, symbol) {
+  return { ...template, id, file, line, symbol, nodeIds: [] };
+}
 
 function validAudit() {
   const audit = {
@@ -72,6 +118,7 @@ function validAudit() {
       id: "dead:unused",
       nodeIds: ["function:unused"],
       file: "src/unused.ts",
+      line: 7,
       symbol: "unused",
       reachabilityStatus: "disconnected_candidate",
       verdict: "VALIDATION_REQUIRED",

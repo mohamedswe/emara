@@ -106,6 +106,7 @@ export function findDeadCodeCandidates(
         id: `dead:${file.path}:${first.name}`,
         nodeIds: nodes.map((node) => node.id).sort(compareText),
         file: file.path,
+        line: Math.min(...nodes.map((node) => node.lineRange.start)),
         symbol: first.name,
         reachabilityStatus: strongest.status,
         verdict,
