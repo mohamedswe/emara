@@ -118,6 +118,31 @@ export function renderAuditReport(audit: FunctionalityAudit): string {
     lines.push("");
   }
 
+  lines.push("## Validated safe to delete", "");
+  const validatedCandidates = audit.deadCodeCandidates
+    .filter((candidate) => candidate.verdict === "VALIDATED_SAFE_TO_DELETE")
+    .sort((left, right) =>
+      compareText(left.file, right.file) || compareText(left.symbol, right.symbol),
+    );
+  if (validatedCandidates.length === 0) {
+    lines.push("None.", "");
+  } else {
+    for (const candidate of validatedCandidates) {
+      const commands = candidate.validation?.commands.length
+        ? candidate.validation.commands.map((cmd) => `\`${inlineCode(cmd)}\``).join(", ")
+        : "None";
+      const fingerprint = candidate.validation?.featureFingerprintUnchanged
+        ? "unchanged"
+        : "changed";
+      lines.push(
+        `- \`${inlineCode(candidate.file)}::${inlineCode(candidate.symbol)}\``,
+        `  - Commands run: ${commands}`,
+        `  - Feature fingerprint: ${fingerprint}`,
+      );
+    }
+    lines.push("");
+  }
+
   lines.push("## Limitations", "");
   if (audit.limitations.length === 0) {
     lines.push("None.", "");

@@ -71,6 +71,25 @@ test("shows only the deterministic top five deletion-validation candidates", () 
   assert.doesNotMatch(readySection, /src\/zeta\.ts/u);
 });
 
+test("renders Validated safe to delete section with commands and fingerprint evidence", () => {
+  const audit = validAudit();
+  audit.deadCodeCandidates[0].verdict = "VALIDATED_SAFE_TO_DELETE";
+  audit.deadCodeCandidates[0].validation = {
+    passed: true,
+    commands: ["npm test", "node --check src/unused.ts"],
+    featureFingerprintUnchanged: true,
+  };
+  audit.summary = deriveFunctionalityAuditSummary(audit);
+
+  const report = renderAuditReport(audit);
+  assert.match(report, /## Validated safe to delete\n\n- `src\/unused\.ts::unused`/u);
+  assert.match(
+    report,
+    /Commands run: `npm test`, `node --check src\/unused\.ts`/u,
+  );
+  assert.match(report, /Feature fingerprint: unchanged/u);
+});
+
 function candidate(template, id, file, line, symbol) {
   return { ...template, id, file, line, symbol, nodeIds: [] };
 }

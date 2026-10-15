@@ -315,10 +315,19 @@ function validateDeletionEvidence(
   issues: string[],
 ): void {
   if (candidate.verdict !== "VALIDATED_SAFE_TO_DELETE") return;
+  if (candidate.validation === null || candidate.validation === undefined) {
+    issues.push(
+      `dead-code candidate ${JSON.stringify(candidate.id)} cannot be VALIDATED_SAFE_TO_DELETE without validation evidence`,
+    );
+    return;
+  }
   if (
-    candidate.validation === null ||
     !candidate.validation.passed ||
+    !Array.isArray(candidate.validation.commands) ||
     candidate.validation.commands.length === 0 ||
+    candidate.validation.commands.some(
+      (cmd) => typeof cmd !== "string" || cmd.trim().length === 0,
+    ) ||
     !candidate.validation.featureFingerprintUnchanged
   ) {
     issues.push(

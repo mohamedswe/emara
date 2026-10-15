@@ -33,6 +33,26 @@ test("requires deletion validation evidence before declaring code safe", () => {
     featureFingerprintUnchanged: true,
   };
   assert.doesNotThrow(() => validateFunctionalityAudit(audit));
+
+  audit.deadCodeCandidates[0].validation = {
+    passed: true,
+    commands: [],
+    featureFingerprintUnchanged: true,
+  };
+  assert.throws(
+    () => validateFunctionalityAudit(audit),
+    /cannot be VALIDATED_SAFE_TO_DELETE/,
+  );
+
+  audit.deadCodeCandidates[0].validation = {
+    passed: true,
+    commands: ["npm test"],
+    featureFingerprintUnchanged: false,
+  };
+  assert.throws(
+    () => validateFunctionalityAudit(audit),
+    /cannot be VALIDATED_SAFE_TO_DELETE/,
+  );
 });
 
 test("requires every recognized entrypoint and documentation promise to be accounted", () => {

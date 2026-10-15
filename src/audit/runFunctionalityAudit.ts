@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 
 import { loadContractEnvironment } from "../contract/buildContract.ts";
 import { DeepSeekChatModel } from "../contract/deepSeekChatModel.ts";
+import {
+  type DeadCodeValidationCommand,
+  validateDeadCodeCandidate,
+} from "../dead-code/validateDeadCodeCandidate.ts";
 import { indexRepository } from "../graph/indexRepository.ts";
 import {
   buildFunctionalityAudit,
@@ -15,6 +19,11 @@ import {
   type FunctionalityAuditOracle,
 } from "./oracle.ts";
 import { renderAuditReportFromJson } from "./renderAuditReport.ts";
+import type { DeadCodeCandidate } from "./types.js";
+import {
+  deriveFunctionalityAuditSummary,
+  validateFunctionalityAudit,
+} from "./validateFunctionalityAudit.ts";
 
 export interface CliOptions {
   repositoryPath: string;
@@ -24,6 +33,8 @@ export interface CliOptions {
   oraclePath?: string;
   model: string;
   deterministic: boolean;
+  validateDeadCode: boolean;
+  validationCommands: DeadCodeValidationCommand[];
 }
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -101,6 +112,42 @@ export async function runFunctionalityAuditCli(
       },
     },
   );
+  if (options.validateDeadCode) {
+    if (options.validationCommands.length === 0) {
+      throw new Error(
+        "--validate-dead-code requires at least one --validation-command",
+      );
+    }
+    const candidatesById = new Map<string, DeadCodeCandidate>(
+      audit.deadCodeCandidates.map((candidate) => [candidate.id, candidate]),
+    );
+    for (const candidate of audit.deadCodeCandidates) {
+      if (
+        candidate.verdict === "CANDIDATE" ||
+        candidate.verdict === "VALIDATION_REQUIRED"
+      ) {
+        try {
+          const { candidate: validated } = await validateDeadCodeCandidate(
+            graph,
+            options.repositoryPath,
+            candidate,
+            options.validationCommands,
+          );
+          candidatesById.set(candidate.id, {
+            ...candidate,
+            verdict: validated.verdict,
+            validation: validated.validation,
+            blockers: validated.blockers,
+          });
+        } catch {
+          // Candidates ineligible for isolated mutation validation remain unchanged
+        }
+      }
+    }
+    audit.deadCodeCandidates = deduplicateCandidates([...candidatesById.values()]);
+    audit.summary = deriveFunctionalityAuditSummary(audit);
+    validateFunctionalityAudit(audit);
+  }
   await writeJsonAtomically(options.outputPath, audit);
   await writeJsonAtomically(semanticPassesPath, {
     schema: "functionality-semantic-passes/v1",
@@ -144,7 +191,7 @@ export function parseArguments(args: string[]): CliOptions {
   const repositoryArg = normalizedArgs[0];
   if (repositoryArg === undefined || repositoryArg.startsWith("--")) {
     throw new Error(
-      "Usage: auditor <repository> [--deterministic] [--output path] [--graph path] [--expected-commit sha] [--oracle path] [--model name]",
+      "Usage: auditor <repository> [--deterministic] [--output path] [--graph path] [--expected-commit sha] [--oracle path] [--model name] [--validate-dead-code] [--validation-command <label>::<cmd>]",
     );
   }
   const repositoryPath = resolve(repositoryArg);
@@ -155,11 +202,18 @@ export function parseArguments(args: string[]): CliOptions {
   let oraclePath: string | undefined;
   let model = process.env.DEEPSEEK_MODEL?.trim() || "deepseek-v4-flash";
   let deterministic = false;
+  let validateDeadCode = false;
+  const validationCommands: DeadCodeValidationCommand[] = [];
 
   for (let index = 1; index < normalizedArgs.length;) {
     const option = normalizedArgs[index];
     if (option === "--deterministic") {
       deterministic = true;
+      index += 1;
+      continue;
+    }
+    if (option === "--validate-dead-code") {
+      validateDeadCode = true;
       index += 1;
       continue;
     }
@@ -183,6 +237,10 @@ export function parseArguments(args: string[]): CliOptions {
       case "--model":
         model = value;
         break;
+      case "--validation-command":
+        validationCommands.push(parseValidationCommand(value));
+        validateDeadCode = true;
+        break;
       default:
         throw new Error(`Unknown option: ${option}`);
     }
@@ -196,9 +254,73 @@ export function parseArguments(args: string[]): CliOptions {
     graphPath,
     model,
     deterministic,
+    validateDeadCode,
+    validationCommands,
     ...(expectedCommit === undefined ? {} : { expectedCommit }),
     ...(oraclePath === undefined ? {} : { oraclePath }),
   };
+}
+
+export function parseValidationCommand(raw: string): DeadCodeValidationCommand {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    throw new Error("Validation command must not be empty");
+  }
+  let label: string | undefined;
+  let commandString = trimmed;
+  const separatorIndex = trimmed.indexOf("::");
+  if (separatorIndex !== -1) {
+    label = trimmed.slice(0, separatorIndex).trim();
+    commandString = trimmed.slice(separatorIndex + 2).trim();
+    if (commandString.length === 0) {
+      throw new Error("Validation command must not be empty");
+    }
+  }
+  const parts = splitCommandLine(commandString);
+  if (parts.length === 0) {
+    throw new Error("Validation command must not be empty");
+  }
+  const command = parts[0];
+  if (command === undefined || command.length === 0) {
+    throw new Error("Validation command must not be empty");
+  }
+  const args = parts.slice(1);
+  return {
+    command,
+    ...(args.length > 0 ? { args } : {}),
+    ...(label !== undefined && label.length > 0 ? { label } : {}),
+  };
+}
+
+function splitCommandLine(commandLine: string): string[] {
+  const tokens: string[] = [];
+  const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/gu;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(commandLine)) !== null) {
+    if (match[1] !== undefined) {
+      tokens.push(match[1]);
+    } else if (match[2] !== undefined) {
+      tokens.push(match[2]);
+    } else {
+      tokens.push(match[0]);
+    }
+  }
+  return tokens;
+}
+
+function deduplicateCandidates(
+  candidates: readonly DeadCodeCandidate[],
+): DeadCodeCandidate[] {
+  const values = new Map<string, DeadCodeCandidate>();
+  for (const candidate of candidates) values.set(candidate.id, candidate);
+  return [...values.values()].sort(
+    (left, right) =>
+      compareText(left.file, right.file) || compareText(left.symbol, right.symbol),
+  );
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function repositoryCommit(repositoryPath: string): string {
