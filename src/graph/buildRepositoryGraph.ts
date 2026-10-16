@@ -219,6 +219,15 @@ function createEntryPointNode(
       ? undefined
       : uniqueFunctionSymbol(fileSymbols, parsedEntryPoint.handlerName);
 
+  const defaultHttpMethod =
+    parsedEntryPoint.kind === "http"
+      ? "ALL"
+      : parsedEntryPoint.kind === "websocket"
+        ? "WS"
+        : undefined;
+  const resolvedHttpMethod =
+    parsedEntryPoint.httpMethod?.trim() || defaultHttpMethod;
+
   return {
     id: `entrypoint:${parsedEntryPoint.kind}:${path}:${parsedEntryPoint.lineRange.start}:${parsedEntryPoint.name}`,
     type: "entrypoint",
@@ -227,9 +236,9 @@ function createEntryPointNode(
     exposure:
       parsedEntryPoint.exposure ??
       (parsedEntryPoint.kind === "startup" ? "startup" : "external"),
-    ...(parsedEntryPoint.httpMethod === undefined
+    ...(resolvedHttpMethod === undefined
       ? {}
-      : { httpMethod: parsedEntryPoint.httpMethod }),
+      : { httpMethod: resolvedHttpMethod }),
     ...(parsedEntryPoint.route === undefined
       ? {}
       : { route: parsedEntryPoint.route }),

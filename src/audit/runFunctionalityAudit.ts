@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, resolve } from "node:path";
+import { basename, dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { loadContractEnvironment } from "../contract/buildContract.ts";
@@ -14,6 +14,11 @@ import {
   buildFunctionalityAudit,
   type SemanticPassRecord,
 } from "./buildFunctionalityAudit.ts";
+import {
+  buildFeatureMap,
+  decorateFeatureMapTitles,
+} from "../map/buildFeatureMap.ts";
+import { renderFeatureMapHtml } from "../map/renderFeatureMapHtml.ts";
 import {
   evaluateAuditAgainstOracle,
   type FunctionalityAuditOracle,
@@ -72,6 +77,8 @@ export async function runFunctionalityAuditCli(
   await mkdir(dirname(options.outputPath), { recursive: true });
   await mkdir(dirname(options.graphPath), { recursive: true });
   const outputDirectory = dirname(options.outputPath);
+  const featureMapPath = resolve(outputDirectory, "feature-map.json");
+  const featureMapHtmlPath = resolve(outputDirectory, "feature-map.html");
   const semanticPassesPath = resolve(outputDirectory, "semantic-passes.json");
   const reportPath = resolve(outputDirectory, "audit-report.md");
   const evaluationPath = resolve(outputDirectory, "oracle-evaluation.json");
@@ -86,6 +93,8 @@ export async function runFunctionalityAuditCli(
     outputPath: options.graphPath,
     excludePaths: [
       options.outputPath,
+      featureMapPath,
+      featureMapHtmlPath,
       semanticPassesPath,
       reportPath,
       evaluationPath,
@@ -148,7 +157,20 @@ export async function runFunctionalityAuditCli(
     audit.summary = deriveFunctionalityAuditSummary(audit);
     validateFunctionalityAudit(audit);
   }
+  const featureMap = await decorateFeatureMapTitles(
+    buildFeatureMap(graph, audit),
+    options.deterministic ? undefined : model,
+    options.model,
+  );
+  const featureMapHtml = renderFeatureMapHtml({
+    repositoryName: basename(options.repositoryPath),
+    graph,
+    featureMap,
+    sourceFiles,
+  });
   await writeJsonAtomically(options.outputPath, audit);
+  await writeJsonAtomically(featureMapPath, featureMap);
+  await writeTextAtomically(featureMapHtmlPath, featureMapHtml);
   await writeJsonAtomically(semanticPassesPath, {
     schema: "functionality-semantic-passes/v1",
     repositoryCommit: commit,
@@ -163,9 +185,14 @@ export async function runFunctionalityAuditCli(
     `[functionality] features=${audit.features.length} promises=${audit.documentationPromises.length} declaredClaims=${audit.declaredClaims.length} deadCandidates=${audit.deadCodeCandidates.length}`,
   );
   console.log(
+    `[functionality] blocks=${featureMap.summary.totalBlocks} (features=${featureMap.summary.featureBlocks} shared=${featureMap.summary.sharedSubsystemBlocks} infra=${featureMap.summary.infrastructureBlocks} orphans=${featureMap.summary.orphanBlocks}) connections=${featureMap.summary.totalConnections}`,
+  );
+  console.log(
     `[functionality] wallClock=${(audit.metrics.wallClockMs / 1_000).toFixed(1)}s deterministic=${(audit.metrics.deterministicWallClockMs / 1_000).toFixed(1)}s modelRequests=${audit.metrics.modelRequests} tokens=${audit.metrics.totalTokens}`,
   );
   console.log(`[functionality] audit=${options.outputPath}`);
+  console.log(`[functionality] featureMap=${featureMapPath}`);
+  console.log(`[functionality] featureMapHtml=${featureMapHtmlPath}`);
   console.log(`[functionality] report=${reportPath}`);
   console.log(`[functionality] semanticPasses=${semanticPassesPath}`);
 

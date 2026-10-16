@@ -12,28 +12,65 @@ For example, Emara locates `DELETE /rooms/:id/:bookingId` at `api/routes/rooms.j
 
 Current status: early CLI for developer investigation. Documentation matching and legacy JSX import handling have known errors in this sample. Findings require review; no candidate is automatically safe to delete.
 
+## Visualizer preview
+
+[![Watch the Emara walkthrough preview](docs/media/emara-preview.png)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4)
+
+[Watch or download the walkthrough demo (MP4)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4).
+
+This is a recorded preview of the interactive architecture visualizer, showcasing AST slicing, feature flow mapping, counterfactual removal blast radius, and verified line-level source code inspection.
+
 ## Quickstart
 
-With Docker running, replace `<absolute-repo-path>` with the absolute path to your Git repository (for example `/home/you/client-app` on Linux or `C:/projects/client-app` in PowerShell). The container writes an `audit-output` directory into the mounted repository:
+Use a clean Git checkout of a JavaScript, TypeScript, or Python repository you know. The current scanner does not generally honor `.gitignore`; old reports and other local files can affect an audit. Keep output outside the target repository. The target application's dependencies do not need to be installed.
 
-```sh
-docker run --rm -v "<absolute-repo-path>:/repo" ghcr.io/mohamedswe/emara:latest /repo --deterministic
-```
+### Run from source
 
-Without `DEEPSEEK_API_KEY`, the container automatically enables deterministic mode. It writes `functionality-audit.json`, `graph.json`, `audit-report.md`, and `semantic-passes.json` under `<repo>/audit-output/`.
-
-To run from source with npm, install Node.js 22.6 or newer and Git:
+Requires Git and Node.js 22.6 or newer:
 
 ```sh
 git clone https://github.com/mohamedswe/emara.git
 cd emara
 npm ci
-npm run auditor -- <repo> --deterministic
+npm run auditor -- "/absolute/path/to/repo" --deterministic --output "../mapping-output/functionality-audit.json" --graph "../mapping-output/graph.json"
 ```
 
-Open `<repo>/audit-output/audit-report.md` when the run completes. The report starts with a Takeover Summary, then lists feature locations and review candidates. Keep `functionality-audit.json` and `graph.json` for structured evidence.
+Replace `/absolute/path/to/repo` with your target path. Windows accepts forward-slash paths such as `C:/projects/client-app`. `../mapping-output` is relative to the Emara checkout; choose another output directory if that would put results inside your target.
+
+### Interactive feature map visualizer
+
+To start the local visualizer workspace and explore architectural flows:
+
+```sh
+npm run serve
+```
+
+Open `http://localhost:4175` in your browser.
+
+### Run with Docker
+
+If native package installation needs a compiler, use Docker instead. With Docker running, create an output directory outside the target first. Replace both absolute paths below; the target is mounted read-only:
+
+```sh
+docker run --rm -v "/absolute/path/to/repo:/repo:ro" -v "/absolute/path/to/output:/output" ghcr.io/mohamedswe/emara:latest /repo --deterministic --output /output/functionality-audit.json --graph /output/graph.json
+```
+
+Use absolute forward-slash Windows paths in PowerShell, for example `C:/projects/client-app:/repo:ro` and `C:/projects/emara-output:/output`.
+
+Deterministic analysis runs locally, makes zero model requests, and needs no API key. Installation and image downloads require network access. Emara parses the target rather than executing its application code.
+
+Open `audit-report.md` in your chosen output directory when the run completes. The report starts with a Takeover Summary, then lists feature locations and review candidates. Keep `functionality-audit.json` and `graph.json` for structured evidence; `semantic-passes.json` records semantic-pass activity.
+
+### Give feedback
+
+Pick one feature you already understand and compare the report with its source. Does Emara locate it correctly? What does it miss or get wrong? Would the report give you a useful starting point on an unfamiliar repository?
+
+[Share audit feedback](https://github.com/mohamedswe/emara/issues/new?template=audit-feedback.yml), including setup failures. One specific finding and what you expected is enough. If you received a personal invitation, replying to that email is fine too.
+
+Audit artifacts can contain private names, paths, and documentation. Do not post client code, secrets, or full reports without reviewing them and obtaining permission. A redacted example or public reproduction is enough. Findings are leads for investigation, not proof of runtime behavior or permission to delete code.
 
 The [sample's unchanged report](docs/samples/room-booking/audit-report.md) shows the current output. Read its [review notes](docs/samples/room-booking/README.md#where-the-report-gets-it-wrong) before interpreting the counts or verdicts.
+
 
 ## What it finds
 
@@ -54,7 +91,6 @@ These are historical release checks, not fresh measurements for every engine cha
 | Rentyl | 66 | 161 | PASS |
 | AI-tutor | 28 | 17 | PASS |
 | uptime-kuma | 102 | 89 | PASS (hand-derived) |
-| InsectFlux | 343 | 529 | — |
 
 ## Language & framework support
 

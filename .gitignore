@@ -12,3 +12,5 @@ data-analysis/
 examples/
 env.exe.stackdump
 yarn-error.log
+codie-target/
+outreach/

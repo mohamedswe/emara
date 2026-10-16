@@ -1,0 +1,4 @@
+# Preserve the published report's exact bytes and provenance hash.
+docs/samples/room-booking/audit-report.md -text
+docs/media/*.mp4 binary
+docs/media/*.png binary

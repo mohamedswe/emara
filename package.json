@@ -8,6 +8,7 @@
   },
   "scripts": {
     "auditor": "node --experimental-strip-types src/audit/runFunctionalityAudit.ts",
+    "serve": "node --experimental-strip-types src/map/serveFeatureMap.ts",
     "build:graph": "node --experimental-strip-types src/graph/buildGraph.ts",
     "build:contract": "node --experimental-strip-types src/contract/buildContract.ts",
     "audit:functionality": "node --experimental-strip-types src/audit/runFunctionalityAudit.ts",

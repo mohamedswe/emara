@@ -1,0 +1,26 @@
+name: Audit feedback
+description: Tell us what the report gets right, misses, or gets wrong. Setup problems welcome.
+title: "[Feedback] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying Emara. One specific example is enough.
+        This is public: do not include secrets, private client code, or unreviewed reports. Use redacted details or a public reproduction.
+  - type: textarea
+    id: observation
+    attributes:
+      label: What happened, and what did you expect?
+      description: Describe a useful finding, a missed feature, a wrong verdict, or an installation problem. Source references are helpful when safe to share.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Repository and setup (optional)
+      description: Language/framework, OS, Node or Docker version, Emara commit/image, command used, and target commit if available. A public repo link is optional; no private code needed.
+  - type: textarea
+    id: usefulness
+    attributes:
+      label: Would you use the report again? (optional)
+      description: Did it help you find code? What would it need to answer before you would use it on a takeover?
