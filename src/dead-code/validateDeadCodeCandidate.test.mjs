@@ -104,6 +104,65 @@ test("rejects structurally ineligible candidates with a typed IneligibleCandidat
   );
 });
 
+test("timeout terminates a sleeping grandchild and reports the timeout", async (context) => {
+  const repositoryPath = await fixtureRepository(context);
+  const { graph } = await indexRepository(repositoryPath);
+  const candidate = findDeadCodeCandidates(graph).find((value) => value.file === "dead.js");
+  assert.ok(candidate);
+  const result = await validateDeadCodeCandidate(graph, repositoryPath, candidate, [{
+    command: process.execPath,
+    args: ["-e", "const {spawn}=require('child_process');const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'});console.log(child.pid);setInterval(()=>{},1000)"],
+    timeoutMs: 1_500,
+  }]);
+  const command = result.commandResults[0];
+  const pid = Number(command?.stdout.trim());
+  assert.ok(Number.isSafeInteger(pid) && pid > 0, "grandchild PID must be reported");
+  context.after(() => killQuietly(pid));
+  assert.equal(await processGone(pid), true, "grandchild must not survive the timeout");
+  assert.equal(command.exitCode, 124);
+  assert.match(command.stderr, /timed out after 1500ms/u);
+  assert.equal(result.candidate.validation?.passed, false);
+});
+
+test("a command that exits cannot leave a descendant running (POSIX process group)", { skip: process.platform === "win32" && "Windows has no process-group containment without a Job Object" }, async (context) => {
+  const repositoryPath = await fixtureRepository(context);
+  const { graph } = await indexRepository(repositoryPath);
+  const candidate = findDeadCodeCandidates(graph).find((value) => value.file === "dead.js");
+  assert.ok(candidate);
+  const result = await validateDeadCodeCandidate(graph, repositoryPath, candidate, [{
+    command: process.execPath,
+    args: ["-e", "const {spawn}=require('child_process');const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore'});child.unref();console.log(child.pid)"],
+  }]);
+  const command = result.commandResults[0];
+  const pid = Number(command?.stdout.trim());
+  assert.ok(Number.isSafeInteger(pid) && pid > 0, "descendant PID must be reported");
+  context.after(() => killQuietly(pid));
+  assert.equal(await processGone(pid), true, "descendant must not survive its parent");
+  assert.equal(command.exitCode, 0);
+  assert.equal(result.candidate.verdict, "VALIDATED_SAFE_TO_DELETE");
+});
+
+function killQuietly(pid) {
+  try {
+    process.kill(pid, "SIGKILL");
+  } catch (error) {
+    if (error.code !== "ESRCH") throw error;
+  }
+}
+
+async function processGone(pid) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      process.kill(pid, 0);
+    } catch (error) {
+      if (error.code === "ESRCH") return true;
+      throw error;
+    }
+    await new Promise((done) => setTimeout(done, 50));
+  }
+  return false;
+}
+
 async function fixtureRepository(context) {
   const repositoryPath = await mkdtemp(join(tmpdir(), "delete-validation-fixture-"));
   context.after(() => rm(repositoryPath, { recursive: true, force: true }));

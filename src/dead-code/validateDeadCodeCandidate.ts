@@ -255,36 +255,107 @@ async function runValidationCommand(
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1) {
     throw new Error("Validation command timeoutMs must be a positive safe integer");
   }
+  warnAboutWindowsContainmentOnce();
   return await new Promise((resolvePromise, reject) => {
     const child = spawn(specification.command, specification.args ?? [], {
       cwd,
       shell: false,
+      // POSIX: own process group, so the whole tree can be signalled at once.
+      detached: process.platform !== "win32",
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";
+    let timedOut = false;
+    let termination: Promise<void> | undefined;
     child.stdout.on("data", (chunk) => {
       stdout = boundedOutput(stdout, String(chunk));
     });
     child.stderr.on("data", (chunk) => {
       stderr = boundedOutput(stderr, String(chunk));
     });
-    const timeout = setTimeout(() => child.kill(), timeoutMs);
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      stderr = boundedOutput(
+        stderr,
+        `
+Validation command timed out after ${timeoutMs}ms; terminating its process tree.
+`,
+      );
+      termination = terminateProcessTree(child.pid).catch((error: unknown) => {
+        stderr = boundedOutput(stderr, `Process-tree termination failed: ${String(error)}
+`);
+        child.kill("SIGKILL");
+      });
+    }, timeoutMs);
     child.on("error", (error) => {
       clearTimeout(timeout);
       reject(error);
     });
+    child.on("exit", () => {
+      // On POSIX, descendants left in the group (possibly holding the output
+      // pipes open) are killed once the command itself has exited.
+      if (process.platform !== "win32") {
+        termination ??= terminateProcessTree(child.pid).catch((error: unknown) => {
+          stderr = boundedOutput(stderr, `Process-group cleanup failed: ${String(error)}
+`);
+        });
+      }
+    });
     child.on("close", (code) => {
       clearTimeout(timeout);
-      resolvePromise({
-        command: commandLabel(specification),
-        exitCode: code ?? 1,
-        stdout,
-        stderr,
+      void Promise.resolve(termination).then(() => {
+        resolvePromise({
+          command: commandLabel(specification),
+          exitCode: timedOut ? 124 : code ?? 1,
+          stdout,
+          stderr,
+        });
       });
     });
   });
+}
+
+/**
+ * POSIX: SIGKILL the command's process group (descendants that call setsid
+ * escape it). Windows: best-effort `taskkill /T /F`, which walks the live
+ * parent/child tree and cannot reach descendants whose parent already exited.
+ */
+async function terminateProcessTree(pid: number | undefined): Promise<void> {
+  if (pid === undefined) return;
+  if (process.platform !== "win32") {
+    try {
+      process.kill(-pid, "SIGKILL");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+    }
+    return;
+  }
+  await new Promise<void>((resolvePromise, reject) => {
+    const killer = spawn("taskkill", ["/PID", String(pid), "/T", "/F"], {
+      windowsHide: true,
+      stdio: "ignore",
+    });
+    killer.on("error", reject);
+    // 128: process already gone.
+    killer.on("close", (code) =>
+      code === 0 || code === 128
+        ? resolvePromise()
+        : reject(new Error(`taskkill exited with code ${code}`)));
+  });
+}
+
+let windowsContainmentWarned = false;
+
+function warnAboutWindowsContainmentOnce(): void {
+  if (process.platform !== "win32" || windowsContainmentWarned) return;
+  windowsContainmentWarned = true;
+  console.error(
+    "[validation] Windows: timed-out commands are stopped with taskkill /T, which cannot reach " +
+      "descendants whose parent already exited. Such processes may keep running; " +
+      "prefer Linux, macOS, or the Docker image for validation of untrusted code.",
+  );
 }
 
 function copyAllowed(repositoryRoot: string, source: string): boolean {
