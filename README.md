@@ -16,9 +16,15 @@ Current status: early CLI for developer investigation. Documentation matching an
 
 [![Watch the Emara walkthrough preview](docs/media/emara-preview.png)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4)
 
+<<<<<<< HEAD
 [Watch or download the walkthrough demo (MP4)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4).
 
 This is a recorded preview of the interactive architecture visualizer, showcasing AST slicing, feature flow mapping, counterfactual removal blast radius, and verified line-level source code inspection.
+=======
+[Watch or download the 35-second walkthrough (MP4)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4).
+
+This is a recorded preview of the paid visualizer in development, not a freely available workspace. It shows the walkthrough page and example map, not a complete interactive feature demonstration. The visualizer application is not included in this repository. For now, help validate the engine: **run an audit, inspect the report, and [tell us what it gets wrong or helps you find](#give-feedback)**.
+>>>>>>> public/main
 
 ## Quickstart
 
