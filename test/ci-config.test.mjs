@@ -89,6 +89,17 @@ test('container keeps build tools out of runtime and has an executable launcher'
   assert.match(runtime, /ENTRYPOINT \["\/app\/bin\/docker-entrypoint\.sh"\]/u);
 });
 
+test('container runs as the unprivileged node user with a writable /output and root-owned /app', () => {
+  const dockerfile = readFileSync(join(root, 'Dockerfile'), 'utf8');
+  const runtime = dockerfile.split(/FROM node:22-slim AS runtime/u)[1];
+  const users = [...runtime.matchAll(/^USER\s+(\S+)\s*$/gmu)].map(match => match[1]);
+  assert.deepEqual(users, ['node']);
+  const afterUser = runtime.slice(runtime.search(/^USER node\s*$/mu));
+  assert.doesNotMatch(afterUser, /^(RUN|COPY|ADD)\b/mu, 'no build steps may run after dropping root');
+  assert.match(runtime, /mkdir -p \/output[\s\S]*chown node:node \/output/u);
+  assert.doesNotMatch(runtime, /chown[^\n]*\/app/u);
+});
+
 test('Pages deploys only fresh builds from main after reusable CI with scoped permissions', () => {
   const pages = workflow('deploy-demo.yml');
   assert.deepEqual(pages.permissions, { contents: 'read' });

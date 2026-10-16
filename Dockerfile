@@ -26,6 +26,12 @@ COPY bin ./bin
 COPY src ./src
 
 RUN chmod +x /app/bin/auditor.mjs /app/bin/docker-entrypoint.sh \
-    && ln -s /app/bin/auditor.mjs /usr/local/bin/auditor
+    && ln -s /app/bin/auditor.mjs /usr/local/bin/auditor \
+    && mkdir -p /output \
+    && chown node:node /output
+
+# Analyze untrusted repositories as the image's unprivileged user (UID 1000).
+# /app stays root-owned, so the auditor process cannot modify its own code.
+USER node
 
 ENTRYPOINT ["/app/bin/docker-entrypoint.sh"]

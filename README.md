@@ -64,6 +64,8 @@ docker run --rm -v "/absolute/path/to/repo:/repo:ro" -v "/absolute/path/to/outpu
 
 Use absolute forward-slash Windows paths in PowerShell, for example `C:/projects/client-app:/repo:ro` and `C:/projects/emara-output:/output`.
 
+The container runs as the unprivileged `node` user (UID 1000), not root. On Linux, the mounted output directory must be writable by that UID; if it is owned by another user, add `--user "$(id -u):$(id -g)"` to `docker run`. For deterministic runs you can also add `--network none --cap-drop ALL --security-opt no-new-privileges`.
+
 Deterministic analysis is the default, makes zero model requests, and needs no API key—even when `DEEPSEEK_API_KEY` is present. Installation and image downloads require network access. To explicitly send source/context to DeepSeek, pass `--model-assisted` and provide the key; the CLI prints the provider endpoint before analysis. `--deterministic` remains supported and cannot be combined with `--model-assisted`.
 
 Emara normally parses the target rather than executing its application code. Optional `--validate-dead-code` commands do execute code in a disposable copy, **not a security sandbox**: commands retain your user/container permissions and network access. Only run validation commands and repositories you trust.
