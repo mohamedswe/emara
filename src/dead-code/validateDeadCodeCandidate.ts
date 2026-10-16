@@ -1,8 +1,10 @@
 import { spawn } from "node:child_process";
 import {
   cp,
+  lstat,
   mkdtemp,
   readFile,
+  readlink,
   realpath,
   rm,
   writeFile,
@@ -10,6 +12,7 @@ import {
 import { tmpdir } from "node:os";
 import {
   basename,
+  dirname,
   extname,
   isAbsolute,
   join,
@@ -97,6 +100,9 @@ export async function validateDeadCodeCandidate(
   try {
     await cp(repositoryRoot, isolatedRepository, {
       recursive: true,
+      // Keep link targets as written; copyAllowed rejects any that would
+      // resolve outside the copy (and thus into the original repository).
+      verbatimSymlinks: true,
       filter: (source) => copyAllowed(repositoryRoot, source),
     });
     if (candidate.id.startsWith("dead-import:")) {
@@ -358,12 +364,37 @@ function warnAboutWindowsContainmentOnce(): void {
   );
 }
 
-function copyAllowed(repositoryRoot: string, source: string): boolean {
+async function copyAllowed(repositoryRoot: string, source: string): Promise<boolean> {
   const relativePath = relative(repositoryRoot, source);
   if (relativePath.length === 0) return true;
-  return !relativePath.split(sep).some((segment) =>
-    EXCLUDED_COPY_DIRECTORIES.has(segment)
-  );
+  if (relativePath.split(sep).some((segment) => EXCLUDED_COPY_DIRECTORIES.has(segment))) {
+    return false;
+  }
+  if ((await lstat(source)).isSymbolicLink()) {
+    assertContainedSymlink(repositoryRoot, source, await readlink(source));
+  }
+  return true;
+}
+
+/**
+ * A copied link must resolve inside the disposable copy. Absolute targets
+ * (including Windows junctions) and relative targets that climb out of the
+ * repository would let validation commands write to the original repository
+ * or elsewhere on the host, so the copy fails closed instead.
+ */
+function assertContainedSymlink(repositoryRoot: string, source: string, target: string): void {
+  const display = relative(repositoryRoot, source).split(sep).join("/");
+  if (isAbsolute(target)) {
+    throw new Error(`Refusing to copy symlink with absolute target: ${display} -> ${target}`);
+  }
+  const resolvedTarget = relative(repositoryRoot, resolve(dirname(source), target));
+  if (
+    isAbsolute(resolvedTarget) ||
+    resolvedTarget === ".." ||
+    resolvedTarget.startsWith(`..${sep}`)
+  ) {
+    throw new Error(`Refusing to copy symlink that escapes the repository: ${display} -> ${target}`);
+  }
 }
 
 function resolveInside(root: string, relativePath: string): string {
