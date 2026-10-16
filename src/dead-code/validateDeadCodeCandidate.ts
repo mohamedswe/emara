@@ -38,6 +38,19 @@ const EXCLUDED_COPY_DIRECTORIES = new Set([
 const DEFAULT_COMMAND_TIMEOUT_MS = 120_000;
 const MAX_COMMAND_OUTPUT_CHARACTERS = 4_000;
 
+/**
+ * The candidate is structurally ineligible for isolated mutation validation
+ * (not disconnected, blocked by a reachable node, or an unsupported import
+ * shape). Callers leave such candidates unchanged; any other error is a real
+ * validation failure.
+ */
+export class IneligibleCandidateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "IneligibleCandidateError";
+  }
+}
+
 export interface DeadCodeValidationCommand {
   command: string;
   args?: string[];
@@ -144,7 +157,7 @@ function assertWholeFileDeletionAllowed(
   const ledger = buildReachabilityLedger(graph);
   const fileStatus = ledger.entries.find((entry) => entry.nodeId === fileId)?.status;
   if (fileStatus !== "disconnected_candidate") {
-    throw new Error(
+    throw new IneligibleCandidateError(
       `Whole-file validation requires disconnected_candidate reachability; received ${fileStatus ?? "missing"}`,
     );
   }
@@ -159,7 +172,7 @@ function assertWholeFileDeletionAllowed(
       entry.status !== "disconnected_candidate",
   );
   if (unsafe !== undefined) {
-    throw new Error(
+    throw new IneligibleCandidateError(
       `Whole-file validation is blocked by ${unsafe.status} node ${unsafe.nodeId}`,
     );
   }
@@ -171,7 +184,7 @@ async function removePythonImportBinding(
   binding: string,
 ): Promise<void> {
   if (extname(filePath).toLowerCase() !== ".py") {
-    throw new Error("Isolated import removal currently supports Python files only");
+    throw new IneligibleCandidateError("Isolated import removal currently supports Python files only");
   }
   const path = resolveInside(repositoryRoot, filePath);
   const source = await readFile(path, "utf8");
@@ -191,7 +204,7 @@ async function removePythonImportBinding(
     matches.push({ index, replacement });
   }
   if (matches.length !== 1) {
-    throw new Error(
+    throw new IneligibleCandidateError(
       `Expected exactly one simple Python import for ${JSON.stringify(binding)}; found ${matches.length}`,
     );
   }

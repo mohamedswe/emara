@@ -167,6 +167,27 @@ test("runs deterministic audit with failing validation command keeping candidate
   assert.match(report, /## Validated safe to delete\n\nNone\./u);
 });
 
+test("surfaces validation setup failures in blockers and stderr instead of silently skipping", async (context) => {
+  const repositoryPath = await createFixtureRepo(context);
+  const auditPath = join(repositoryPath, "audit-output", "functionality-audit.json");
+  const notices = [];
+  context.mock.method(console, "error", (message) => notices.push(String(message)));
+
+  await runFunctionalityAuditCli([
+    repositoryPath,
+    "--deterministic",
+    "--validate-dead-code",
+    "--validation-command=missing-validator-executable-87c922",
+  ]);
+
+  const audit = JSON.parse(await readFile(auditPath, "utf8"));
+  const deadCandidate = audit.deadCodeCandidates.find((c) => c.file === "dead.js");
+  assert.ok(deadCandidate, "dead.js candidate must exist");
+  assert.equal(deadCandidate.verdict, "VALIDATION_REQUIRED");
+  assert.match(deadCandidate.blockers.join(" "), /Isolated validation failed: .*ENOENT/u);
+  assert.match(notices.join("\n"), /dead\.js.*Isolated validation failed: .*ENOENT/u);
+});
+
 test("model opt-in emits an endpoint egress notice on stderr before work", async (context) => {
   const repositoryPath = await createFixtureRepo(context);
   const previous = { key: process.env.DEEPSEEK_API_KEY, url: process.env.DEEPSEEK_BASE_URL };

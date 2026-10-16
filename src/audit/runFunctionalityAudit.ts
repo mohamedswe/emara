@@ -7,6 +7,7 @@ import { loadContractEnvironment } from "../contract/buildContract.ts";
 import { DeepSeekChatModel } from "../contract/deepSeekChatModel.ts";
 import {
   type DeadCodeValidationCommand,
+  IneligibleCandidateError,
   validateDeadCodeCandidate,
 } from "../dead-code/validateDeadCodeCandidate.ts";
 import { indexRepository } from "../graph/indexRepository.ts";
@@ -150,8 +151,17 @@ export async function runFunctionalityAuditCli(
             validation: validated.validation,
             blockers: validated.blockers,
           });
-        } catch {
-          // Candidates ineligible for isolated mutation validation remain unchanged
+        } catch (error) {
+          // Structurally ineligible candidates remain unchanged. Anything else
+          // (missing executable, copy failure, …) must not pass silently.
+          if (error instanceof IneligibleCandidateError) continue;
+          const message = `Isolated validation failed: ${error instanceof Error ? error.message : String(error)}`;
+          console.error(`[functionality] ${candidate.id}: ${message}`);
+          candidatesById.set(candidate.id, {
+            ...candidate,
+            verdict: "VALIDATION_REQUIRED",
+            blockers: [...candidate.blockers, message],
+          });
         }
       }
     }

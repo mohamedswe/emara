@@ -7,7 +7,7 @@ import { test } from "node:test";
 import { indexRepository } from "../graph/indexRepository.ts";
 import { findDeadCodeCandidates } from "./findDeadCodeCandidates.ts";
 import { findUnusedImportCandidates } from "./findUnusedImportCandidates.ts";
-import { validateDeadCodeCandidate } from "./validateDeadCodeCandidate.ts";
+import { IneligibleCandidateError, validateDeadCodeCandidate } from "./validateDeadCodeCandidate.ts";
 
 test("promotes a disconnected file only after isolated commands and feature fingerprint pass", async (context) => {
   const repositoryPath = await fixtureRepository(context);
@@ -84,6 +84,24 @@ test("removes one unused Python import binding in isolation", async (context) =>
   );
 
   assert.equal(result.candidate.verdict, "VALIDATED_SAFE_TO_DELETE");
+});
+
+test("rejects structurally ineligible candidates with a typed IneligibleCandidateError", async (context) => {
+  const repositoryPath = await fixtureRepository(context);
+  const { graph } = await indexRepository(repositoryPath);
+  const candidate = findDeadCodeCandidates(graph).find((value) => value.file === "dead.js");
+  assert.ok(candidate);
+  const command = [{ command: process.execPath, args: ["--version"] }];
+
+  await assert.rejects(
+    validateDeadCodeCandidate(graph, repositoryPath, { ...candidate, id: "dead-import:dead.js::dormant" }, command),
+    (error) => error instanceof IneligibleCandidateError && /Python files only/u.test(error.message),
+  );
+  const reachable = findDeadCodeCandidates(graph).find((value) => value.file === "dead.js");
+  await assert.rejects(
+    validateDeadCodeCandidate(graph, repositoryPath, { ...reachable, file: "app.js" }, command),
+    (error) => error instanceof IneligibleCandidateError && /disconnected_candidate reachability/u.test(error.message),
+  );
 });
 
 async function fixtureRepository(context) {
