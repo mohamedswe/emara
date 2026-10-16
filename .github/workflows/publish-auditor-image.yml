@@ -6,19 +6,31 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/publish-auditor-image.yml"
+      - ".github/workflows/ci.yml"
       - ".dockerignore"
       - "Dockerfile"
       - "bin/**"
       - "package.json"
       - "package-lock.json"
+      - "tsconfig.json"
       - "src/**"
+      - "scripts/**"
+      - "test/**"
+
 permissions:
   contents: read
-  packages: write
 
 jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
   publish:
+    needs: [verify]
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -37,11 +49,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push latest image
+      - name: Build and push SHA and latest images
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
+          tags: |
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

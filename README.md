@@ -50,7 +50,9 @@ To start the local visualizer workspace and explore architectural flows:
 npm run serve
 ```
 
-Open `http://localhost:4175` in your browser.
+Open `http://localhost:4173` in your browser (or use the URL printed by the server).
+
+The local server requires its per-session token for analysis requests, rejects foreign hosts/origins, and accepts JSON bodies up to 16 KiB. It runs one distinct analysis at a time and coalesces identical in-flight requests. Its retained payload cache is limited to eight entries and 64 MiB of serialized JSON; this does not cap a single analysis's peak memory or clone size.
 
 ### Run with Docker
 
@@ -62,7 +64,9 @@ docker run --rm -v "/absolute/path/to/repo:/repo:ro" -v "/absolute/path/to/outpu
 
 Use absolute forward-slash Windows paths in PowerShell, for example `C:/projects/client-app:/repo:ro` and `C:/projects/emara-output:/output`.
 
-Deterministic analysis runs locally, makes zero model requests, and needs no API key. Installation and image downloads require network access. Emara parses the target rather than executing its application code.
+Deterministic analysis is the default, makes zero model requests, and needs no API key—even when `DEEPSEEK_API_KEY` is present. Installation and image downloads require network access. To explicitly send source/context to DeepSeek, pass `--model-assisted` and provide the key; the CLI prints the provider endpoint before analysis. `--deterministic` remains supported and cannot be combined with `--model-assisted`.
+
+Emara normally parses the target rather than executing its application code. Optional `--validate-dead-code` commands do execute code in a disposable copy, **not a security sandbox**: commands retain your user/container permissions and network access. Only run validation commands and repositories you trust.
 
 Open `audit-report.md` in your chosen output directory when the run completes. The report starts with a Takeover Summary, then lists feature locations and review candidates. Keep `functionality-audit.json` and `graph.json` for structured evidence; `semantic-passes.json` records semantic-pass activity.
 

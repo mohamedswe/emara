@@ -5,7 +5,7 @@ import {
   isSupportedSourceFile,
   parseWithLanguageFrontend,
 } from "../languages/languageFrontends.ts";
-import { getSource } from "../retrieval/getSource.ts";
+import { createSourceReader } from "../retrieval/getSource.ts";
 import type { ScannedFile } from "../scanner/types.js";
 import type { FunctionalityFeature } from "./types.js";
 
@@ -244,6 +244,7 @@ async function readIndexedFacts(
 ): Promise<{ sources: IndexedSourceFact[]; manifests: ManifestFact[] }> {
   const sources: IndexedSourceFact[] = [];
   const manifests: ManifestFact[] = [];
+  const readSource = createSourceReader(graph, repositoryPath);
   for (const file of [...graph.files].sort((left, right) =>
     compareText(left.path, right.path)
   )) {
@@ -251,7 +252,7 @@ async function readIndexedFacts(
     const baseName = file.path.split("/").at(-1)?.toLowerCase() ?? "";
     const supported = isSupportedSourceFile(file as ScannedFile);
     if (!supported && !DEPENDENCY_MANIFEST_NAMES.has(baseName)) continue;
-    const slice = await getSource(graph, repositoryPath, file.id, {
+    const slice = await readSource(file.id, {
       maxLines: file.lineRange.end,
       maxBytes: MAX_SOURCE_BYTES,
     });

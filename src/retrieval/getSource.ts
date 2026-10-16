@@ -3,11 +3,8 @@ import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 
 import type {
-  EntryPointNode,
-  EvidenceGraphNode,
   FileNode,
   RepositoryGraph,
-  SymbolNode,
 } from "../graph/types.js";
 import { validateRepositoryGraph } from "../graph/validateRepositoryGraph.ts";
 import type {
@@ -21,14 +18,73 @@ const DEFAULT_LIMITS: SourceSliceLimits = {
   maxBytes: 65_536,
 };
 
-type SourceBearingFileNode = FileNode & {
-  lineRange: { start: number; end: number };
-};
-type SourceBearingNode =
-  | SymbolNode
-  | EntryPointNode
-  | EvidenceGraphNode
-  | SourceBearingFileNode;
+interface SourceNodeSnapshot {
+  id: string;
+  fileId: string;
+  lineRange: { start: number; end: number } | undefined;
+}
+
+export type SourceReader = (
+  nodeId: string,
+  options?: GetSourceOptions,
+) => Promise<SourceSlice>;
+
+/**
+ * Creates an explicit batch boundary: validate once and privately copy the fields
+ * needed for retrieval. Later graph mutations do not affect this reader. Filesystem
+ * contents, hashes and realpath containment are still checked on every read.
+ */
+export function createSourceReader(
+  graph: RepositoryGraph,
+  repositoryPath: string,
+): SourceReader {
+  if (repositoryPath.length === 0) {
+    throw new Error("Repository path must not be empty");
+  }
+  validateRepositoryGraph(graph);
+  const filesById = new Map<string, FileNode>();
+  const nodesById = new Map<string, SourceNodeSnapshot>();
+  for (const file of graph.files) {
+    const lineRange = file.lineRange === undefined ? undefined : { ...file.lineRange };
+    filesById.set(file.id, {
+      id: file.id,
+      type: "file",
+      path: file.path,
+      language: file.language,
+      contentHash: file.contentHash,
+    });
+    nodesById.set(file.id, { id: file.id, fileId: file.id, lineRange });
+  }
+  for (const nodes of [graph.symbols, graph.entrypoints, graph.entities]) {
+    for (const node of nodes) {
+      nodesById.set(node.id, {
+        id: node.id,
+        fileId: node.fileId,
+        lineRange: { ...node.lineRange },
+      });
+    }
+  }
+  return async (nodeId, options = {}) => {
+    if (nodeId.length === 0) {
+      throw new Error("Source node ID must not be empty");
+    }
+    const limits = resolveLimits(options);
+    const node = nodesById.get(nodeId);
+    if (node === undefined) {
+      throw new Error(`Source node not found: ${JSON.stringify(nodeId)}`);
+    }
+    if (node.lineRange === undefined) {
+      throw new Error(`File node ${JSON.stringify(nodeId)} has no indexed line range`);
+    }
+    const file = filesById.get(node.fileId);
+    if (file === undefined) {
+      throw new Error(
+        `Source node ${JSON.stringify(nodeId)} references missing file ${JSON.stringify(node.fileId)}`,
+      );
+    }
+    return readSourceSlice(repositoryPath, nodeId, node.lineRange, file, limits);
+  };
+}
 
 export async function getSource(
   graph: RepositoryGraph,
@@ -43,20 +99,19 @@ export async function getSource(
     throw new Error("Source node ID must not be empty");
   }
 
-  const limits = resolveLimits(options);
-  validateRepositoryGraph(graph);
+  // Preserve argument validation order and revalidate mutable graphs per call.
+  resolveLimits(options);
+  return createSourceReader(graph, repositoryPath)(nodeId, options);
+}
 
-  const node = findSourceBearingNode(graph, nodeId);
-  const file = node.type === "file"
-    ? node
-    : graph.files.find((candidate) => candidate.id === node.fileId);
-  if (file === undefined) {
-    throw new Error(
-      `Source node ${JSON.stringify(nodeId)} references missing file ${JSON.stringify(node.type === "file" ? node.id : node.fileId)}`,
-    );
-  }
-
-  const lineCount = node.lineRange.end - node.lineRange.start + 1;
+async function readSourceSlice(
+  repositoryPath: string,
+  nodeId: string,
+  lineRange: { start: number; end: number },
+  file: FileNode,
+  limits: SourceSliceLimits,
+): Promise<SourceSlice> {
+  const lineCount = lineRange.end - lineRange.start + 1;
   if (lineCount > limits.maxLines) {
     throw new Error(
       `Source slice for ${JSON.stringify(nodeId)} spans ${lineCount} lines, exceeding maxLines ${limits.maxLines}`,
@@ -74,7 +129,7 @@ export async function getSource(
   }
 
   const source = sourceBytes.toString("utf8");
-  const content = sliceLines(source, node.lineRange.start, node.lineRange.end);
+  const content = sliceLines(source, lineRange.start, lineRange.end);
   const byteLength = Buffer.byteLength(content, "utf8");
   if (byteLength > limits.maxBytes) {
     throw new Error(
@@ -83,11 +138,11 @@ export async function getSource(
   }
 
   return {
-    nodeId: node.id,
+    nodeId,
     fileId: file.id,
     path: file.path,
     language: file.language,
-    lineRange: { ...node.lineRange },
+    lineRange: { ...lineRange },
     content,
     lineCount,
     byteLength,
@@ -95,31 +150,6 @@ export async function getSource(
     integrity: "verified",
     limits,
   };
-}
-
-function findSourceBearingNode(
-  graph: RepositoryGraph,
-  nodeId: string,
-): SourceBearingNode {
-  const node =
-    graph.symbols.find((candidate) => candidate.id === nodeId) ??
-    graph.entrypoints.find((candidate) => candidate.id === nodeId) ??
-    graph.entities.find((candidate) => candidate.id === nodeId);
-  if (node !== undefined) {
-    return node;
-  }
-
-  const file = graph.files.find((candidate) => candidate.id === nodeId);
-  if (file?.lineRange !== undefined) {
-    return file as SourceBearingFileNode;
-  }
-  if (file !== undefined) {
-    throw new Error(
-      `File node ${JSON.stringify(nodeId)} has no indexed line range`,
-    );
-  }
-
-  throw new Error(`Source node not found: ${JSON.stringify(nodeId)}`);
 }
 
 async function resolveRepositoryRoot(repositoryPath: string): Promise<string> {

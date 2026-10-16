@@ -39,6 +39,7 @@ export interface AppShellPreset {
 export interface RenderFeatureMapAppShellOptions {
   presets?: readonly AppShellPreset[];
   initialPayload?: ViewerPayload | null;
+  sessionToken?: string;
 }
 
 const MAX_EMBEDDED_FILE_LINES = 1_500;
@@ -83,7 +84,13 @@ export function renderFeatureMapAppShellHtml(
   const serializedBoot = JSON.stringify({
     presets,
     initialPayload,
-  }).replaceAll("</script>", "<\\/script>");
+    sessionToken: options.sessionToken ?? null,
+  })
+    .replaceAll("<", "\\u003c")
+    .replaceAll(">", "\\u003e")
+    .replaceAll("&", "\\u0026")
+    .replaceAll("\u2028", "\\u2028")
+    .replaceAll("\u2029", "\\u2029");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1603,7 +1610,7 @@ export function renderFeatureMapAppShellHtml(
       try {
         const res = await fetch("/api/analyze", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Emara-Token": boot.sessionToken || "" },
           body: JSON.stringify({ target: trimmed }),
         });
         const data = await res.json();

@@ -11,6 +11,27 @@ import {
   runFunctionalityAuditCli,
 } from "./runFunctionalityAudit.ts";
 
+test("defaults to deterministic even when a model key is present", (context) => {
+  const previous = process.env.DEEPSEEK_API_KEY;
+  context.after(() => {
+    if (previous === undefined) delete process.env.DEEPSEEK_API_KEY;
+    else process.env.DEEPSEEK_API_KEY = previous;
+  });
+  process.env.DEEPSEEK_API_KEY = "test-key";
+  assert.equal(parseArguments(["fixture-repository"]).deterministic, true);
+});
+
+test("only explicit --model-assisted opts in to model egress", () => {
+  assert.equal(parseArguments(["fixture-repository", "--model", "custom"]).deterministic, true);
+  assert.equal(parseArguments(["fixture-repository", "--model-assisted", "--model", "custom"]).deterministic, false);
+});
+
+test("rejects conflicting egress mode flags in either order", () => {
+  for (const flags of [["--deterministic", "--model-assisted"], ["--model-assisted", "--deterministic"]]) {
+    assert.throws(() => parseArguments(["fixture-repository", ...flags]), /cannot combine.*--deterministic.*--model-assisted/i);
+  }
+});
+
 test("defaults output artifacts inside the target repository", () => {
   const repositoryPath = resolve("fixture-repository");
   const options = parseArguments([repositoryPath, "--deterministic"]);
@@ -144,6 +165,32 @@ test("runs deterministic audit with failing validation command keeping candidate
 
   const report = await readFile(reportPath, "utf8");
   assert.match(report, /## Validated safe to delete\n\nNone\./u);
+});
+
+test("model opt-in emits an endpoint egress notice on stderr before work", async (context) => {
+  const repositoryPath = await createFixtureRepo(context);
+  const previous = { key: process.env.DEEPSEEK_API_KEY, url: process.env.DEEPSEEK_BASE_URL };
+  context.after(() => {
+    for (const [name, value] of [["DEEPSEEK_API_KEY", previous.key], ["DEEPSEEK_BASE_URL", previous.url]]) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+  process.env.DEEPSEEK_API_KEY = "test-key";
+  process.env.DEEPSEEK_BASE_URL = "https://example.test/v1/";
+  const notices = [];
+  const stop = new Error("stop before any network request");
+  context.mock.method(console, "log", () => { throw stop; });
+  context.mock.method(console, "error", (message) => { notices.push(message); throw stop; });
+  await assert.rejects(runFunctionalityAuditCli([repositoryPath, "--model-assisted"]), (error) => error === stop);
+  assert.match(notices[0], /egress.*source.*https:\/\/example.test\/v1\/chat\/completions/i);
+  assert.equal(notices[0].includes("test-key"), false);
+});
+
+test("Docker forwards explicit mode flags without inferring consent from credentials", async () => {
+  const script = await readFile(new URL("../../bin/docker-entrypoint.sh", import.meta.url), "utf8");
+  assert.equal(script.includes("DEEPSEEK_API_KEY"), false);
+  assert.match(script, /exec node.*"\$@"/u);
 });
 
 async function createFixtureRepo(context) {

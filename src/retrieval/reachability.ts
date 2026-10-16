@@ -196,49 +196,51 @@ function findPaths(
   adjacency: ReadonlyMap<string, Array<{ nodeId: string; edge: Edge }>>,
   limits: { maxDepth: number; maxPaths: number },
 ): { paths: EvidencePath[]; total: number; truncated: boolean } {
+  // Visit each node once. Equal-depth alternatives contribute counts and only a
+  // bounded set of example paths, never an exponentially growing frontier.
+  const queue = [...roots].sort(compareText);
+  const depths = new Map(queue.map(root => [root, 0]));
+  const counts = new Map(queue.map(root => [root, 1]));
+  const examples = new Map<string, EvidencePath[]>(queue.map(root => [root, [{ nodeIds: [root], edges: [] }]]));
   const paths: EvidencePath[] = [];
   let total = 0;
-  const queue = [...roots]
-    .sort(compareText)
-    .map((root) => ({ nodeIds: [root], edges: [] as Edge[] }));
-  const bestDepth = new Map(queue.map((path) => [path.nodeIds[0] as string, 0]));
-
+  const addCount = (left: number, right: number): number => Math.min(Number.MAX_SAFE_INTEGER, left + right);
   for (let index = 0; index < queue.length; index += 1) {
-    const path = queue[index];
-    if (path === undefined) continue;
-    const current = path.nodeIds.at(-1);
+    const current = queue[index];
     if (current === undefined) continue;
-
+    const depth = depths.get(current) ?? 0;
+    const currentPaths = examples.get(current) ?? [];
     if (targets.has(current)) {
-      total += 1;
-      if (paths.length < limits.maxPaths) {
-        paths.push({
-          nodeIds: [...path.nodeIds],
-          edges: path.edges.map((edge) => ({
-            ...edge,
-            evidence: { ...edge.evidence },
-          })),
-        });
-      }
+      total = addCount(total, counts.get(current) ?? 0);
+      paths.push(...currentPaths);
+      paths.sort(comparePaths);
+      paths.length = Math.min(paths.length, limits.maxPaths);
       continue;
     }
-    if (path.edges.length >= limits.maxDepth) continue;
-
+    if (depth >= limits.maxDepth) continue;
     for (const neighbor of adjacency.get(current) ?? []) {
-      if (path.nodeIds.includes(neighbor.nodeId)) continue;
-      const nextDepth = path.edges.length + 1;
-      const knownDepth = bestDepth.get(neighbor.nodeId);
-      if (knownDepth !== undefined && knownDepth < nextDepth) continue;
-      bestDepth.set(neighbor.nodeId, nextDepth);
-      queue.push({
-        nodeIds: [...path.nodeIds, neighbor.nodeId],
-        edges: [...path.edges, neighbor.edge],
-      });
+      const nextDepth = depth + 1;
+      const knownDepth = depths.get(neighbor.nodeId);
+      if (knownDepth !== undefined && knownDepth !== nextDepth) continue;
+      if (knownDepth === undefined) {
+        depths.set(neighbor.nodeId, nextDepth);
+        queue.push(neighbor.nodeId);
+      }
+      counts.set(neighbor.nodeId, addCount(counts.get(neighbor.nodeId) ?? 0, counts.get(current) ?? 0));
+      const nextPaths = examples.get(neighbor.nodeId) ?? [];
+      for (const path of currentPaths) {
+        nextPaths.push({ nodeIds: [...path.nodeIds, neighbor.nodeId], edges: [...path.edges, neighbor.edge] });
+      }
+      nextPaths.sort(comparePaths);
+      nextPaths.length = Math.min(nextPaths.length, limits.maxPaths);
+      examples.set(neighbor.nodeId, nextPaths);
     }
   }
-
-  paths.sort(comparePaths);
-  return { paths, total, truncated: total > paths.length };
+  return {
+    paths: paths.map(path => ({ nodeIds: [...path.nodeIds], edges: path.edges.map(edge => ({ ...edge, evidence: { ...edge.evidence } })) })),
+    total,
+    truncated: total > paths.length,
+  };
 }
 
 function buildProductAdjacency(

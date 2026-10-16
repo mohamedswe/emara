@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, rm } from "node:fs/promises";
@@ -10,6 +10,7 @@ import { promisify } from "node:util";
 import { buildFunctionalityAudit } from "../audit/buildFunctionalityAudit.ts";
 import { indexRepository } from "../graph/indexRepository.ts";
 import { buildFeatureMap } from "./buildFeatureMap.ts";
+import { createPayloadCache } from "./payloadCache.ts";
 import { renderFeatureMapAppShellHtml, type ViewerPayload } from "./renderFeatureMapHtml.ts";
 
 const execFileAsync = promisify(execFile);
@@ -29,7 +30,7 @@ export interface PresetTarget {
   path: string;
 }
 
-const payloadCache = new Map<string, ViewerPayload>();
+const payloadCache = createPayloadCache({ maxEntries: 8, maxBytes: 64 * 1024 * 1024 });
 
 export function discoverPresetTargets(): PresetTarget[] {
   const famousRoot = resolve(tmpdir(), "emara-famous-repos");
@@ -79,9 +80,7 @@ export async function analyzeTargetToPayload(
         /<script id="emara-boot" type="application\/json">([\s\S]*?)<\/script>/u,
       );
       if (match?.[1] !== undefined) {
-        const parsedBoot = JSON.parse(
-          match[1].replaceAll("<\\/script>", "</script>"),
-        ) as { initialPayload?: ViewerPayload };
+        const parsedBoot = JSON.parse(match[1]) as { initialPayload?: ViewerPayload };
         if (
           parsedBoot.initialPayload &&
           parsedBoot.initialPayload.featureMap.repositoryCommit === target.commit
@@ -191,6 +190,7 @@ export function parseGitHubSpec(input: string): RemoteGitSpec | null {
     const owner = urlMatch[1]!;
     const repo = urlMatch[2]!;
     const ref = urlMatch[3] ?? "HEAD";
+    if (ref.startsWith("-")) return null;
     return {
       owner,
       repo,
@@ -207,6 +207,7 @@ export function parseGitHubSpec(input: string): RemoteGitSpec | null {
     const owner = shorthandMatch[1]!;
     const repo = shorthandMatch[2]!;
     const ref = shorthandMatch[3] ?? "HEAD";
+    if (ref.startsWith("-")) return null;
     return {
       owner,
       repo,
@@ -235,7 +236,7 @@ async function cloneRemoteSpec(spec: RemoteGitSpec): Promise<ResolvedAnalyzeTarg
   try {
     await runGit(workDir, ["init", "-q"]);
     await runGit(workDir, ["remote", "add", "origin", spec.cloneUrl]);
-    await runGit(workDir, ["fetch", "--depth", "1", "origin", spec.ref]);
+    await runGit(workDir, ["fetch", "--depth", "1", "--end-of-options", "origin", spec.ref]);
     await runGit(workDir, ["checkout", "-q", "FETCH_HEAD"]);
     const commit = await resolveGitCommit(workDir, "HEAD");
     return {
@@ -316,20 +317,37 @@ async function runGit(cwd: string, args: string[]): Promise<string> {
   return stdout;
 }
 
-export function startFeatureMapServer(port = 4173): Promise<{
+export function startFeatureMapServer(
+  port = 4173,
+  options: { analyze?: (input: string) => Promise<ViewerPayload> } = {},
+): Promise<{
   port: number;
   url: string;
   close: () => Promise<void>;
 }> {
   const presets = discoverPresetTargets();
+  const sessionToken = randomBytes(32).toString("hex");
+  const analyze = options.analyze ?? analyzeTargetToPayload;
+  const inflight = new Map<string, Promise<ViewerPayload>>();
 
   const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     try {
-      const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+      const address = server.address();
+      const actualPort = typeof address === "object" && address !== null ? address.port : port;
+      const allowedHosts = new Set([`localhost:${actualPort}`, `127.0.0.1:${actualPort}`]);
+      if (!allowedHosts.has(req.headers.host ?? "")) {
+        res.writeHead(421).end("Bad host");
+        return;
+      }
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'none'");
+      const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
 
       if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/feature-map.html")) {
         const html = renderFeatureMapAppShellHtml({
           presets,
+          sessionToken,
         });
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(html);
@@ -343,11 +361,34 @@ export function startFeatureMapServer(port = 4173): Promise<{
       }
 
       if (req.method === "POST" && url.pathname === "/api/analyze") {
+        if (req.headers["content-type"]?.split(";")[0]?.trim().toLowerCase() !== "application/json") {
+          res.writeHead(415).end("JSON required");
+          return;
+        }
+        if (req.headers["x-emara-token"] !== sessionToken ||
+            (req.headers.origin !== undefined && ![...allowedHosts].some(host => req.headers.origin === `http://${host}`))) {
+          res.writeHead(403).end("Forbidden");
+          return;
+        }
         const body = await readRequestBody(req);
-        const parsed = JSON.parse(body || "{}") as { target?: string };
-        const targetInput = (parsed.target ?? "").trim();
+        const parsed: unknown = JSON.parse(body || "{}");
+        if (typeof parsed !== "object" || parsed === null || !("target" in parsed) || typeof parsed.target !== "string" || !parsed.target.trim()) {
+          throw new Error("A non-empty target string is required");
+        }
+        const targetInput = parsed.target.trim();
+        let work = inflight.get(targetInput);
+        if (work === undefined) {
+          if (inflight.size > 0) {
+            res.writeHead(429, { "Retry-After": "5" }).end("Another analysis is running");
+            return;
+          }
+          work = Promise.resolve().then(() => analyze(targetInput));
+          inflight.set(targetInput, work);
+          const clear = (): void => { if (inflight.get(targetInput) === work) inflight.delete(targetInput); };
+          void work.then(clear, clear);
+        }
         const startedAt = Date.now();
-        const payload = await analyzeTargetToPayload(targetInput);
+        const payload = await work;
         const elapsedMs = Date.now() - startedAt;
         res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ ok: true, elapsedMs, payload }));
@@ -358,7 +399,7 @@ export function startFeatureMapServer(port = 4173): Promise<{
       res.end(JSON.stringify({ ok: false, error: "Not found" }));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+      res.writeHead(error instanceof RequestBodyTooLargeError ? 413 : 400, { "Content-Type": "application/json; charset=utf-8" });
       res.end(JSON.stringify({ ok: false, error: message }));
     }
   });
@@ -380,10 +421,21 @@ export function startFeatureMapServer(port = 4173): Promise<{
   });
 }
 
+class RequestBodyTooLargeError extends Error {}
+
 function readRequestBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolvePromise, rejectPromise) => {
     const chunks: Buffer[] = [];
-    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    let size = 0;
+    req.on("data", (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > 16 * 1024) {
+        chunks.length = 0;
+        rejectPromise(new RequestBodyTooLargeError("Request body exceeds 16 KiB"));
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on("end", () => resolvePromise(Buffer.concat(chunks).toString("utf8")));
     req.on("error", rejectPromise);
   });

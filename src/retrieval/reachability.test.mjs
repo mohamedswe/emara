@@ -11,6 +11,36 @@ import {
   isReachable,
 } from "./reachability.ts";
 
+test("diamond path queries count alternatives without materializing every path", async context => {
+  const repositoryPath = await mkdtemp(join(tmpdir(), "reachability-diamond-"));
+  context.after(() => rm(repositoryPath, { recursive: true, force: true }));
+  const lines = ['app.get("/diamond", root);', 'function root() { a0(); b0(); }'];
+  for (let i = 0; i < 10; i++) {
+    for (const side of ['a', 'b']) {
+      lines.push(`function ${side}${i}() { ${i === 9 ? 'leaf();' : `a${i + 1}(); b${i + 1}();`} }`);
+    }
+  }
+  lines.push('function leaf() {}');
+  await writeFixture(repositoryPath, "app.ts", lines.join('\n'));
+  const { graph } = await indexRepository(repositoryPath);
+  let pathCopies = 0;
+  const originalIterator = Array.prototype[Symbol.iterator];
+  Array.prototype[Symbol.iterator] = function* () {
+    if (typeof this[0] === 'string' && this[0].startsWith('endpoint:')) pathCopies++;
+    yield* originalIterator.call(this);
+  };
+  let result;
+  try {
+    result = findPathsFromEntrypoints(graph, 'function:app.ts:leaf', { maxPaths: 3, maxDepth: 20 });
+  } finally {
+    Array.prototype[Symbol.iterator] = originalIterator;
+  }
+  assert.equal(result.total, 1024);
+  assert.equal(result.paths.length, 3);
+  assert.equal(result.truncated, true);
+  assert.ok(pathCopies < 500, `bounded path copying expected, got ${pathCopies}`);
+});
+
 test("classifies external, startup, test-only, unreferenced, and unknown code conservatively", async (context) => {
   const repositoryPath = await mkdtemp(join(tmpdir(), "reachability-"));
   context.after(() => rm(repositoryPath, { recursive: true, force: true }));

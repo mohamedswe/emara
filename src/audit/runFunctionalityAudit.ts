@@ -73,6 +73,8 @@ export async function runFunctionalityAuditCli(
       apiKey,
       ...(baseUrl === undefined || baseUrl.length === 0 ? {} : { baseUrl }),
     });
+    const endpoint = `${(baseUrl || "https://api.deepseek.com").replace(/\/+$/, "")}/chat/completions`;
+    console.error(`[functionality] Egress enabled: repository source and evidence may be sent to ${endpoint}`);
   }
   await mkdir(dirname(options.outputPath), { recursive: true });
   await mkdir(dirname(options.graphPath), { recursive: true });
@@ -215,6 +217,9 @@ export function parseArguments(args: string[]): CliOptions {
     const match = argument.match(/^(--[^=]+)=(.*)$/u);
     return match === null ? [argument] : [match[1] ?? "", match[2] ?? ""];
   });
+  if (normalizedArgs.includes("--deterministic") && normalizedArgs.includes("--model-assisted")) {
+    throw new Error("Cannot combine --deterministic and --model-assisted");
+  }
   const repositoryArg = normalizedArgs[0];
   if (repositoryArg === undefined || repositoryArg.startsWith("--")) {
     throw new Error(
@@ -228,7 +233,7 @@ export function parseArguments(args: string[]): CliOptions {
   let expectedCommit: string | undefined;
   let oraclePath: string | undefined;
   let model = process.env.DEEPSEEK_MODEL?.trim() || "deepseek-v4-flash";
-  let deterministic = false;
+  let deterministic = true;
   let validateDeadCode = false;
   const validationCommands: DeadCodeValidationCommand[] = [];
 
@@ -236,6 +241,11 @@ export function parseArguments(args: string[]): CliOptions {
     const option = normalizedArgs[index];
     if (option === "--deterministic") {
       deterministic = true;
+      index += 1;
+      continue;
+    }
+    if (option === "--model-assisted") {
+      deterministic = false;
       index += 1;
       continue;
     }

@@ -9,6 +9,7 @@ export interface DeepSeekChatModelOptions {
   apiKey: string;
   baseUrl?: string;
   fetchImplementation?: typeof fetch;
+  requestTimeoutMs?: number;
 }
 
 interface DeepSeekMessage extends Record<string, unknown> {
@@ -20,12 +21,17 @@ export class DeepSeekChatModel implements ContractDiscoveryModel {
   readonly #apiKey: string;
   readonly #baseUrl: string;
   readonly #fetch: typeof fetch;
+  readonly #requestTimeoutMs: number;
   #requests = 0;
   #promptTokens = 0;
   #completionTokens = 0;
   #totalTokens = 0;
 
   constructor(options: DeepSeekChatModelOptions) {
+    this.#requestTimeoutMs = options.requestTimeoutMs ?? 60_000;
+    if (!Number.isInteger(this.#requestTimeoutMs) || this.#requestTimeoutMs < 1 || this.#requestTimeoutMs > 300_000) {
+      throw new Error("requestTimeoutMs must be an integer between 1 and 300000");
+    }
     if (options.apiKey.trim().length === 0) {
       throw new Error("DeepSeek API key must not be empty");
     }
@@ -45,6 +51,26 @@ export class DeepSeekChatModel implements ContractDiscoveryModel {
 
   async createResponse(
     request: ContractModelRequest,
+  ): Promise<ContractModelResponse> {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => {
+        const error = new Error(`DeepSeek request timed out after ${this.#requestTimeoutMs}ms`);
+        controller.abort(error);
+        reject(error);
+      }, this.#requestTimeoutMs);
+    });
+    try {
+      return await Promise.race([this.#createResponse(request, controller.signal), timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async #createResponse(
+    request: ContractModelRequest,
+    signal: AbortSignal,
   ): Promise<ContractModelResponse> {
     const tools = request.tools.map((tool) => ({
       type: "function",
@@ -77,6 +103,7 @@ export class DeepSeekChatModel implements ContractDiscoveryModel {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal,
     });
 
     if (!response.ok) {
@@ -87,6 +114,7 @@ export class DeepSeekChatModel implements ContractDiscoveryModel {
     }
 
     const value: unknown = await response.json();
+    signal.throwIfAborted();
     if (!isRecord(value) || !Array.isArray(value.choices)) {
       throw new Error("DeepSeek Chat Completions returned an invalid response object");
     }
@@ -142,20 +170,26 @@ async function fetchWithRetry(
 ): Promise<Response> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    init?.signal?.throwIfAborted();
     try {
       const response = await fetchImpl(url, init);
+      init?.signal?.throwIfAborted();
       if (response.ok) return response;
       // Retry rate limits and server errors; fail fast on other 4xx.
       if (response.status === 429 || response.status >= 500) {
         lastError = new Error(`HTTP ${response.status} ${response.statusText}`);
-        if (attempt < maxAttempts) await sleep(backoffMs(attempt));
+        const retryAfter = response.headers?.get("Retry-After");
+        const delay = retryAfterMs(retryAfter) ?? backoffMs(attempt);
+        void response.body?.cancel().catch(() => {});
+        if (attempt < maxAttempts) await sleep(delay, init?.signal);
         continue;
       }
       return response; // non-retryable 4xx — caller handles the error body
     } catch (error) {
+      init?.signal?.throwIfAborted();
       // Network-level failure (fetch failed, DNS, connection reset).
       lastError = error;
-      if (attempt < maxAttempts) await sleep(backoffMs(attempt));
+      if (attempt < maxAttempts) await sleep(backoffMs(attempt), init?.signal);
     }
   }
   throw lastError instanceof Error
@@ -163,12 +197,36 @@ async function fetchWithRetry(
     : new Error(`DeepSeek request failed after ${maxAttempts} attempts`);
 }
 
+function retryAfterMs(value: string | null | undefined): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  const normalized = value.trim();
+  const isSeconds = /^\d+$/u.test(normalized);
+  // Do not let Date.parse interpret malformed numeric values as calendar dates.
+  if (!isSeconds && !/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/u.test(normalized)) {
+    return undefined;
+  }
+  const delay = isSeconds ? Number(normalized) * 1_000 : Date.parse(normalized) - Date.now();
+  if (Number.isNaN(delay)) return undefined;
+  return Math.max(0, Math.min(delay, 30_000));
+}
+
 function backoffMs(attempt: number): number {
   return 1000 * 2 ** attempt; // 2s, 4s, 8s
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
+function sleep(ms: number, signal?: AbortSignal | null): Promise<void> {
+  signal?.throwIfAborted();
+  return new Promise((resolvePromise, reject) => {
+    const onAbort = (): void => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolvePromise();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 function extractUsage(value: Record<string, unknown>): ContractModelUsage | undefined {

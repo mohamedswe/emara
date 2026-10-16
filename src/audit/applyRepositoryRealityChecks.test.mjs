@@ -94,6 +94,20 @@ test("rejects create-next-app scaffold evidence and groups documented zero-impor
   assert.match(phantom?.title ?? "", /React Markdown/u);
 });
 
+test("validates the graph only once when checking multiple indexed files", async () => {
+  const repositoryPath = await mkdtemp(join(tmpdir(), "repository-reality-batch-"));
+  temporaryRepositories.push(repositoryPath);
+  await writeFixture(repositoryPath, "src/a.ts", "export const a = 1;\n");
+  await writeFixture(repositoryPath, "src/b.ts", "export const b = 2;\n");
+  const { graph } = await indexRepository(repositoryPath);
+  let validations = 0;
+  Object.defineProperty(graph, "version", {
+    get() { validations += 1; return 4; },
+  });
+  assert.deepEqual(await applyRepositoryRealityChecks([], [], graph, repositoryPath), []);
+  assert.equal(validations, 1);
+});
+
 async function writeFixture(repositoryPath, relativePath, content) {
   const filePath = join(repositoryPath, ...relativePath.split("/"));
   await mkdir(dirname(filePath), { recursive: true });

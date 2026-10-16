@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, test } from "node:test";
 
 import { indexRepository } from "../graph/indexRepository.ts";
 import { getSource } from "./getSource.ts";
+import * as sourceRetrieval from "./getSource.ts";
 
 const temporaryDirectories = [];
 
@@ -231,6 +232,100 @@ test("rejects graph paths that escape the resolved repository root", async () =>
     getSource(graph, repositoryPath, "function:../outside.ts:outside"),
     /Graph file path escapes repository root/,
   );
+});
+
+test("batch reader validates once and reads an indexed snapshot independent of graph mutations", async () => {
+  const repositoryPath = await createTemporaryDirectory("source-batch-");
+  await writeFixture(repositoryPath, "src/app.ts", "export function run() {}\n");
+  const { graph } = await indexRepository(repositoryPath);
+  let validations = 0;
+  Object.defineProperty(graph, "version", {
+    get() { validations += 1; return 4; },
+  });
+  assert.equal(typeof sourceRetrieval.createSourceReader, "function");
+  const readSource = sourceRetrieval.createSourceReader(graph, repositoryPath);
+  assert.equal(validations, 1);
+
+  // Neither subsequent validation nor linear scans of the original graph are allowed.
+  graph.files[0].path = "../outside.ts";
+  graph.files[0].contentHash = "mutated";
+  graph.files[0].language = "mutated";
+  graph.files[0].lineRange.end = 100;
+  graph.symbols[0].fileId = "missing";
+  graph.symbols[0].lineRange.start = 100;
+  graph.files = [];
+  graph.symbols = [];
+  graph.edges = [];
+  const symbol = await readSource("function:src/app.ts:run");
+  assert.equal(symbol.content, "export function run() {}");
+  assert.equal(symbol.path, "src/app.ts");
+  assert.equal(symbol.language, "typescript");
+  symbol.lineRange.start = 99;
+  const again = await readSource(symbol.nodeId);
+  assert.deepEqual(again.lineRange, { start: 1, end: 1 });
+  const file = await readSource("file:src/app.ts");
+  assert.equal(file.content, "export function run() {}\n");
+  assert.equal(validations, 1);
+});
+
+test("standalone reads revalidate mutable graphs, while new readers reject invalid graphs", async () => {
+  const repositoryPath = await createTemporaryDirectory("source-mutable-");
+  await writeFixture(repositoryPath, "src/app.ts", "export function run() {}\n");
+  const { graph } = await indexRepository(repositoryPath);
+  const nodeId = "function:src/app.ts:run";
+  await getSource(graph, repositoryPath, nodeId);
+  graph.edges[0].target = "missing";
+  await assert.rejects(getSource(graph, repositoryPath, nodeId), /Invalid repository graph/);
+  assert.throws(
+    () => sourceRetrieval.createSourceReader(graph, repositoryPath),
+    /Invalid repository graph/,
+  );
+});
+
+test("batch reads rehash files on every request even if the caller updates the graph hash", async () => {
+  const repositoryPath = await createTemporaryDirectory("source-batch-hash-");
+  await writeFixture(repositoryPath, "src/app.ts", "export function run() { return 1; }\n");
+  const { graph } = await indexRepository(repositoryPath);
+  const readSource = sourceRetrieval.createSourceReader(graph, repositoryPath);
+  const nodeId = "function:src/app.ts:run";
+  await readSource(nodeId);
+  const changed = "export function run() { return 2; }\n";
+  await writeFixture(repositoryPath, "src/app.ts", changed);
+  graph.files[0].contentHash = createHash("sha256").update(changed).digest("hex");
+  await assert.rejects(readSource(nodeId), /has changed since graph construction/);
+  assert.match((await getSource(graph, repositoryPath, nodeId)).content, /return 2/);
+});
+
+test("batch reads recheck symlink containment after a successful read", async () => {
+  const repositoryPath = await createTemporaryDirectory("source-batch-link-");
+  const outsidePath = await createTemporaryDirectory("source-batch-outside-");
+  const source = "export function run() {}\n";
+  await writeFixture(repositoryPath, "src/app.ts", source);
+  // Identical bytes ensure hash checks alone cannot detect the escape.
+  await writeFixture(outsidePath, "app.ts", source);
+  const { graph } = await indexRepository(repositoryPath);
+  const readSource = sourceRetrieval.createSourceReader(graph, repositoryPath);
+  const nodeId = "function:src/app.ts:run";
+  await readSource(nodeId);
+  await rm(join(repositoryPath, "src"), { recursive: true });
+  await symlink(outsidePath, join(repositoryPath, "src"), process.platform === "win32" ? "junction" : "dir");
+  await assert.rejects(readSource(nodeId), /resolves outside repository root/);
+  await assert.rejects(getSource(graph, repositoryPath, nodeId), /resolves outside repository root/);
+});
+
+test("batch reads retain request limits and reject files without indexed ranges", async () => {
+  const repositoryPath = await createTemporaryDirectory("source-batch-limits-");
+  await writeFixture(repositoryPath, "src/app.ts", "export function run() {\n  return 1;\n}\n");
+  const { graph } = await indexRepository(repositoryPath);
+  const readSource = sourceRetrieval.createSourceReader(graph, repositoryPath);
+  await assert.rejects(readSource("function:src/app.ts:run", { maxLines: 1 }), /exceeding maxLines/);
+  await assert.rejects(readSource("function:src/app.ts:run", { maxBytes: 1 }), /exceeding maxBytes/);
+  await assert.rejects(readSource("", {}), /Source node ID must not be empty/);
+  await assert.rejects(readSource("missing"), /Source node not found/);
+  await assert.rejects(readSource("file:src/app.ts", { maxBytes: 0 }), /positive safe integer/);
+  delete graph.files[0].lineRange;
+  const noRangeReader = sourceRetrieval.createSourceReader(graph, repositoryPath);
+  await assert.rejects(noRangeReader("file:src/app.ts"), /has no indexed line range/);
 });
 
 async function createTemporaryDirectory(prefix) {
