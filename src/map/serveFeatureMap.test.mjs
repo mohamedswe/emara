@@ -90,6 +90,38 @@ test("failed analysis clears in-flight state so a later request can run", async 
   assert.equal(calls, 2);
 });
 
+test("rejects CSRF-style simple requests and opaque origins before analysis", async t => {
+  let calls = 0;
+  const server = await session(t, async () => { calls++; return {}; });
+  const body = '{"target":"a/b"}';
+  assert.equal((await send(server.port, { method: "POST", headers: { "Content-Type": "text/plain", Origin: "http://evil.example" }, body })).status, 415);
+  assert.equal((await send(server.port, { method: "POST", headers: { "Content-Type": "application/json", Origin: "null", "X-Emara-Token": server.token }, body })).status, 403);
+  assert.equal((await send(server.port, { method: "POST", headers: { "Content-Type": "application/json", Host: `evil.example:${server.port}`, "X-Emara-Token": server.token }, body })).status, 421);
+  assert.equal(calls, 0);
+});
+
+test("oversized streaming uploads receive 413 and the server closes the connection", async t => {
+  const server = await session(t);
+  const outcome = await new Promise((resolve, reject) => {
+    const req = request({
+      hostname: "127.0.0.1",
+      port: server.port,
+      path: "/api/analyze",
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Emara-Token": server.token, "Content-Length": "10000000" },
+    }, res => {
+      res.resume();
+      res.on("end", () => resolve({ status: res.statusCode, connection: res.headers.connection }));
+    });
+    const timer = setTimeout(() => { req.destroy(); reject(new Error("server kept the oversized upload open")); }, 2000);
+    req.on("error", () => {});
+    req.on("close", () => clearTimeout(timer));
+    req.write("x".repeat(17_000));
+  });
+  assert.equal(outcome.status, 413);
+  assert.equal(outcome.connection, "close");
+});
+
 test("rejects option-like Git refs before invoking Git", () => {
   assert.equal(parseGitHubSpec("owner/repo@--help"), null);
   assert.equal(parseGitHubSpec("https://github.com/owner/repo/tree/-v"), null);

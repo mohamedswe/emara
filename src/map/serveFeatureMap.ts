@@ -399,6 +399,11 @@ export function startFeatureMapServer(
       res.end(JSON.stringify({ ok: false, error: "Not found" }));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      if (error instanceof RequestBodyTooLargeError) {
+        // Do not keep reading an oversized body: answer, then drop the socket.
+        res.setHeader("Connection", "close");
+        res.once("finish", () => req.destroy());
+      }
       res.writeHead(error instanceof RequestBodyTooLargeError ? 413 : 400, { "Content-Type": "application/json; charset=utf-8" });
       res.end(JSON.stringify({ ok: false, error: message }));
     }
@@ -431,6 +436,8 @@ function readRequestBody(req: IncomingMessage): Promise<string> {
       size += chunk.length;
       if (size > 16 * 1024) {
         chunks.length = 0;
+        req.removeAllListeners("data");
+        req.pause();
         rejectPromise(new RequestBodyTooLargeError("Request body exceeds 16 KiB"));
         return;
       }
@@ -438,6 +445,7 @@ function readRequestBody(req: IncomingMessage): Promise<string> {
     });
     req.on("end", () => resolvePromise(Buffer.concat(chunks).toString("utf8")));
     req.on("error", rejectPromise);
+    req.on("aborted", () => rejectPromise(new Error("Request aborted")));
   });
 }
 
