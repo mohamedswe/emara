@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { basename } from "node:path";
 
 import type { IndexedSourceFile } from "../graph/indexedSourceFile.ts";
@@ -92,15 +93,12 @@ export function renderFeatureMapAppShellHtml(
     .replaceAll("\u2028", "\\u2028")
     .replaceAll("\u2029", "\\u2029");
 
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(pageTitle)}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       /* Obsidian & Champagne Gold Design System */
@@ -2221,6 +2219,33 @@ export function renderFeatureMapAppShellHtml(
 </body>
 </html>
 `;
+  return withContentSecurityPolicy(html);
+}
+
+/**
+ * The page embeds untrusted repository source as data. Allow only the exact
+ * viewer client script, no third-party hosts, and same-origin API calls.
+ */
+function withContentSecurityPolicy(html: string): string {
+  const clientScript = html.match(/<script>([\s\S]*?)<\/script>/u)?.[1];
+  if (clientScript === undefined) throw new Error("Viewer client script missing");
+  const hash = createHash("sha256").update(clientScript).digest("base64");
+  const policy = [
+    "default-src 'none'",
+    `script-src 'sha256-${hash}'`,
+    "style-src 'unsafe-inline'",
+    "connect-src 'self'",
+    "img-src 'self' data:",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "object-src 'none'",
+  ].join("; ");
+  return html.replace(
+    '<meta charset="utf-8" />',
+    `<meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="${policy}" />
+  <meta name="referrer" content="no-referrer" />`,
+  );
 }
 
 renderFeatureMapAppShellHtml.buildPayload = buildViewerPayload;
