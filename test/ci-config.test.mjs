@@ -89,6 +89,30 @@ test('container keeps build tools out of runtime and has an executable launcher'
   assert.match(runtime, /ENTRYPOINT \["\/app\/bin\/docker-entrypoint\.sh"\]/u);
 });
 
+test('Pages deploys only fresh builds from main after reusable CI with scoped permissions', () => {
+  const pages = workflow('deploy-demo.yml');
+  assert.deepEqual(pages.permissions, { contents: 'read' });
+  assert.deepEqual(pages.on.push.branches, ['main']);
+  assert.ok('workflow_dispatch' in pages.on);
+  for (const path of ['src/**', 'demo-data/**', 'package.json', 'package-lock.json', 'test/**', '.github/workflows/ci.yml']) {
+    assert.ok(pages.on.push.paths.includes(path), `Pages must react to ${path}`);
+  }
+  assert.equal(pages.jobs.verify.uses, './.github/workflows/ci.yml');
+  const build = pages.jobs.build;
+  assert.deepEqual(build.needs, ['verify']);
+  assert.equal(build.if, "github.ref == 'refs/heads/main'");
+  assert.deepEqual(build.permissions, { contents: 'read' });
+  const commands = build.steps.filter(step => step.run).map(step => step.run);
+  assert.deepEqual(commands, ['npm ci', 'rm -rf demo', 'npm run build:demos']);
+  assert.equal(build.steps.find(step => step.uses === 'actions/upload-pages-artifact@v3').with.path, 'demo');
+  const deploy = pages.jobs.deploy;
+  assert.deepEqual(deploy.needs, ['build']);
+  assert.equal(deploy.if, "github.ref == 'refs/heads/main'");
+  assert.deepEqual(deploy.permissions, { pages: 'write', 'id-token': 'write' });
+  assert.ok(!deploy.steps.some(step => step.run || step.uses === 'actions/checkout@v4'));
+  assert.ok(deploy.steps.some(step => step.uses === 'actions/deploy-pages@v4'));
+});
+
 test('all existing workflows remain valid YAML', () => {
   workflow('deploy-demo.yml');
   workflow('publish-auditor-image.yml');

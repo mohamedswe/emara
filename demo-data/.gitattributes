@@ -1,0 +1,2 @@
+# Checksums are over UTF-8 bytes; preserve LF on Windows and Linux.
+*.json text eol=lf

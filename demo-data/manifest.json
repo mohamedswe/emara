@@ -1,0 +1,30 @@
+{
+  "schema": "emara-demo-inputs/v1",
+  "sourceCommit": "44f1e968deee9dcfe9e62fdb11062903465d11b8",
+  "targets": [
+    {
+      "id": "uptime-kuma",
+      "input": "uptime-kuma.json",
+      "repository": "louislam/uptime-kuma",
+      "repositoryCommit": "b092505f894d66669b67f46e1da72b51016eceab",
+      "sourcePath": "demo/uptime-kuma.html",
+      "sha256": "733b8a98b06645ca743936110d3c304dc2abce4bbd149c9dc483e9a69b06003c"
+    },
+    {
+      "id": "full-stack-fastapi-template",
+      "input": "full-stack-fastapi-template.json",
+      "repository": "fastapi/full-stack-fastapi-template",
+      "repositoryCommit": "b1125d8839482cb7bbae603ddc6d0081bf87532e",
+      "sourcePath": "demo/fastapi-template.html",
+      "sha256": "870e6074ee4be9b99b3eeaef03a71f3e743c36552952de93f1c3baebfdd99d36"
+    },
+    {
+      "id": "bulletproof-react",
+      "input": "bulletproof-react.json",
+      "repository": "alan2207/bulletproof-react",
+      "repositoryCommit": "9506629ed003a561c6627735480cce4994244bb4",
+      "sourcePath": "demo/bulletproof-react.html",
+      "sha256": "0cbdcf9cf753af923c334f4b1b496da026f6150e189584e990b90d15d9fa159b"
+    }
+  ]
+}
