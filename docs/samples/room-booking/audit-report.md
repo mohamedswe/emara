@@ -139,13 +139,6 @@ None.
 - `web/src/index.js::queryString` — Import binding "queryString" has no lexical use outside its import statement. (VALIDATION_REQUIRED)
 - `web/src/registerServiceWorker.js::unregister` — No runtime, startup, test, or meaningful incident path was found. Treat it as a deletion candidate, not proof of safety. (VALIDATION_REQUIRED)
 
-<<<<<<< HEAD
-## Validated safe to delete
-
-None.
-
-=======
->>>>>>> public/main
 ## Limitations
 
 None.

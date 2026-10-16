@@ -8,11 +8,7 @@ Generated and checked at 2026-09-09T00:46:32.752988+00:00.
 - Execution: local source CLI, deterministic mode. Target application dependencies were not installed and target application code was not executed.
 - Result: exit 0; 77 graph files, 123 symbols, 11 entrypoints, 22 feature entries, 36 dead-code candidates, 0 model requests, 0 tokens.
 - Runtime: not independently measured. Ignore the engine's zero timing fields.
-<<<<<<< HEAD
-- No oracle or full product regression suite was run for this sample. Selected findings were reviewed against source, as described in the walkthrough.I 
-=======
 - No oracle or full product regression suite was run for this sample. Selected findings were reviewed against source, as described in the walkthrough.
->>>>>>> public/main
 - `audit-report.md` is copied byte-for-byte from the fresh run. The walkthrough is separately authored human-review material, not generated engine output.
 
 ## Reproduce

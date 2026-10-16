@@ -12,19 +12,18 @@ For example, Emara locates `DELETE /rooms/:id/:bookingId` at `api/routes/rooms.j
 
 Current status: early CLI for developer investigation. Documentation matching and legacy JSX import handling have known errors in this sample. Findings require review; no candidate is automatically safe to delete.
 
-## Visualizer preview
+## Interactive Architecture Visualizer
+
+Explore pre-computed interactive feature maps in your browser with zero installation (AST slicing, dependency flow, simulated removal blast radius, and exact source inspection):
+
+- [**louislam/uptime-kuma** (85k★ · Node + Express + Vue) →](https://mohamedswe.github.io/emara/uptime-kuma.html)
+- [**fastapi/full-stack-fastapi-template** (40k★ · FastAPI + React + SQLModel) →](https://mohamedswe.github.io/emara/fastapi-template.html)
+- [**alan2207/bulletproof-react** (35k★ · Next.js / React Architecture) →](https://mohamedswe.github.io/emara/bulletproof-react.html)
+- [**Explore the interactive landing hub →**](https://mohamedswe.github.io/emara/)
 
 [![Watch the Emara walkthrough preview](docs/media/emara-preview.png)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4)
 
-<<<<<<< HEAD
 [Watch or download the walkthrough demo (MP4)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4).
-
-This is a recorded preview of the interactive architecture visualizer, showcasing AST slicing, feature flow mapping, counterfactual removal blast radius, and verified line-level source code inspection.
-=======
-[Watch or download the 35-second walkthrough (MP4)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4).
-
-This is a recorded preview of the paid visualizer in development, not a freely available workspace. It shows the walkthrough page and example map, not a complete interactive feature demonstration. The visualizer application is not included in this repository. For now, help validate the engine: **run an audit, inspect the report, and [tell us what it gets wrong or helps you find](#give-feedback)**.
->>>>>>> public/main
 
 ## Quickstart
 

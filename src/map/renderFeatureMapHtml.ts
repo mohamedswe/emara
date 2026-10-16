@@ -33,6 +33,7 @@ export interface AppShellPreset {
   label: string;
   subtitle: string;
   path: string;
+  url?: string;
 }
 
 export interface RenderFeatureMapAppShellOptions {
@@ -1573,6 +1574,11 @@ export function renderFeatureMapAppShellHtml(
         });
         btn.addEventListener("click", () => {
           const val = btn.getAttribute("data-preset");
+          const presetObj = presets.find((p) => p.id === val);
+          if (presetObj && presetObj.url) {
+            window.location.href = presetObj.url;
+            return;
+          }
           analyzeInput.value = val;
           ambientBoost = 1;
           runAnalyzeRequest(val);
