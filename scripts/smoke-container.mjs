@@ -17,7 +17,7 @@ try {
   run(['run', '--rm', '--user', '0:0', '--entrypoint', 'sh', '-v', `${repo}:/repo`, image, '-c', 'git -C /repo init -q && git -C /repo add . && git -C /repo -c user.name=Fixture -c user.email=fixture@example.invalid commit -qm fixture']);
   const uid = run(['run', '--rm', '--entrypoint', 'id', image, '-u']).trim();
   assert.notEqual(uid, '0');
-  run(['run', '--rm', '--entrypoint', 'node', image, '-e', 'const fs=require("fs");fs.writeFileSync("/output/probe","ok");try{fs.writeFileSync("/app/probe","bad");process.exitCode=1}catch{}']);
+  run(['run', '--rm', '--entrypoint', 'node', image, '-e', 'const fs=require("fs");fs.writeFileSync("/output/probe","ok");try{fs.writeFileSync("/app/probe","bad");process.exitCode=1}catch(e){if(e.code!=="EACCES"&&e.code!=="EROFS"&&e.code!=="EPERM")throw e}']);
   // A Linux bind mount must explicitly permit the selected uid to write output.
   run(['run', '--rm', '--user', '0:0', '--entrypoint', 'chmod', '-v', `${output}:/output`, image, '0777', '/output']);
   const stdout = run(['run', '--rm', '--network', 'none', '--read-only', '--tmpfs', '/tmp:rw,noexec,nosuid,size=128m', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '-v', `${repo}:/repo:ro`, '-v', `${output}:/output`, image, '/repo']);

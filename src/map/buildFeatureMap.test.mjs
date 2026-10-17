@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
 
-import { buildFeatureMap, validateFeatureMap } from "./buildFeatureMap.ts";
+import { buildFeatureMap, decorateFeatureMapTitles, validateFeatureMap } from "./buildFeatureMap.ts";
 import { renderFeatureMapHtml } from "./renderFeatureMapHtml.ts";
 import { parseGitHubSpec } from "./serveFeatureMap.ts";
 
@@ -510,3 +510,17 @@ test("parseGitHubSpec parses GitHub commit URLs and owner/repo@sha shorthands", 
 });
 
 
+
+test("decorateFeatureMapTitles keeps deterministic titles and reports a failed model call", async (context) => {
+  const notices = [];
+  context.mock.method(console, "error", (message) => notices.push(String(message)));
+  const map = {
+    blocks: [{ id: "feature-a", kind: "feature", title: "Deterministic title", studs: [], filePaths: ["a.js"] }],
+  };
+  const failingModel = { createResponse: async () => { throw new Error("upstream 503"); } };
+
+  const result = await decorateFeatureMapTitles(map, failingModel);
+
+  assert.equal(result.blocks[0].title, "Deterministic title");
+  assert.match(notices.join("\n"), /Model title decoration failed; keeping deterministic titles: upstream 503/u);
+});

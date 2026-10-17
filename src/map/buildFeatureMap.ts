@@ -422,8 +422,12 @@ export async function decorateFeatureMapTitles(
         block.title = decorated;
       }
     }
-  } catch {
-    // Retain deterministic capability titles if the optional model call fails
+  } catch (error) {
+    // Retain deterministic capability titles if the optional model call
+    // fails, but say so: model-assisted runs must not degrade silently.
+    console.error(
+      `[feature-map] Model title decoration failed; keeping deterministic titles: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
   return map;
 }
