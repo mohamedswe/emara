@@ -77,6 +77,9 @@ export function renderFeatureMapAppShellHtml(
   options: RenderFeatureMapAppShellOptions = {},
 ): string {
   const presets = options.presets ?? [];
+  // Static pages (GitHub Pages demos) have no /api/analyze backend.
+  const staticDemo = options.sessionToken === undefined &&
+    presets.some((preset) => preset.url !== undefined);
   const initialPayload = options.initialPayload ?? null;
   const pageTitle = initialPayload
     ? `${initialPayload.repositoryName} — Emara Feature Architecture`
@@ -1168,9 +1171,11 @@ export function renderFeatureMapAppShellHtml(
         </div>
       </div>
 
-      <h1 class="landing-title">Visualize any commit into features</h1>
+      <h1 class="landing-title">${staticDemo ? "Static snapshot demo" : "Visualize any commit into features"}</h1>
       <p class="landing-sub">
-        Paste a commit hash or <code>owner/repo@commit</code>. Emara indexes the AST, slices external entrypoints into capabilities, isolates shared subsystems, and maps line-level source evidence.
+        ${staticDemo
+          ? "Choose a pinned repository snapshot below. Nothing is uploaded or analyzed from this page; run Emara locally to analyze your own code. Static findings require human review."
+          : "Paste a commit hash or <code>owner/repo@commit</code>. Emara indexes the AST, slices external entrypoints into capabilities, isolates shared subsystems, and maps line-level source evidence."}
       </p>
 
       <!-- 3. Refined Input Bar & "Analyze Commit" CTA -->
@@ -1180,6 +1185,7 @@ export function renderFeatureMapAppShellHtml(
             <input
               class="prompt-input"
               id="analyze-input"
+              ${staticDemo ? "disabled" : ""}
               type="text"
               placeholder="Paste commit hash (e.g. 9b40ef983d) or owner/repo@sha…"
               autocomplete="off"
@@ -1187,7 +1193,7 @@ export function renderFeatureMapAppShellHtml(
             />
           </div>
 
-          <button class="prompt-submit" id="analyze-submit" type="submit">
+          <button class="prompt-submit" id="analyze-submit" type="submit" ${staticDemo ? "disabled" : ""}>
             <span id="analyze-submit-label">Analyze Commit</span>
             <span class="btn-arrow-cue" aria-hidden="true">→</span>
           </button>
@@ -1201,7 +1207,7 @@ export function renderFeatureMapAppShellHtml(
         <div class="section-divider" aria-hidden="true"></div>
 
         <div class="presets-header-row">
-          <div class="presets-label">Or inspect a local repository at HEAD</div>
+          <div class="presets-label">${staticDemo ? "Choose a pinned repository snapshot" : "Or inspect a local repository at HEAD"}</div>
         </div>
 
         <div class="preset-grid" id="preset-grid"></div>
@@ -1228,14 +1234,14 @@ export function renderFeatureMapAppShellHtml(
           Shared &amp; Core <span class="lens-count" id="count-shared">0</span>
         </button>
         <button class="lens-tab" data-lens="orphans">
-          Unused / Safe Delete <span class="lens-count" id="count-orphans">0</span>
+          Deletion review <span class="lens-count" id="count-orphans">0</span>
         </button>
       </nav>
       <div class="topbar-right">
         <button class="switch-btn" id="new-commit-btn" title="Analyze a different commit or repository">
-          <span>Analyze Commit…</span>
+          <span>${staticDemo ? "Choose snapshot…" : "Analyze Commit…"}</span>
         </button>
-        <button class="sim-toggle" id="sim-toggle" title="Simulate removing the selected feature to see which exclusive files can be deleted">
+        <button class="sim-toggle" id="sim-toggle" title="Preview static removal impact; this does not prove that any file is safe to delete">
           <span>Simulate Removal</span>
         </button>
       </div>
@@ -1882,7 +1888,7 @@ export function renderFeatureMapAppShellHtml(
               '<strong>Simulated Removal of "' + esc(block.title) + '"</strong><br/>' +
               '<span style="color:var(--text-1);font-size:12px">' +
                 (impact.freedFiles.length > 0
-                  ? 'Safely deletes <strong>' + impact.freedFiles.length + ' exclusive file(s) (' + impact.freedLines + ' lines)</strong>: ' + esc(impact.freedFiles.join(", "))
+                  ? 'Statically exclusive to this capability: <strong>' + impact.freedFiles.length + ' file(s) (' + impact.freedLines + ' lines)</strong>, not validated for deletion: ' + esc(impact.freedFiles.join(", "))
                   : '0 files exclusively owned (this capability shares its files with other active capabilities).') +
                 (impact.degradedToSingleConsumerBlockIds.length > 0
                   ? ' · Degrades ' + impact.degradedToSingleConsumerBlockIds.length + ' shared module(s) to a single remaining consumer.'
@@ -1952,7 +1958,7 @@ export function renderFeatureMapAppShellHtml(
         centerFilesHtml +=
           '<div class="code-row' + (isFreed ? ' freed-highlight' : '') + '" data-open-file="' + esc(filePath) + '" data-open-line="1">' +
             '<span>' + esc(filePath) + '</span>' +
-            '<span class="badge ' + (isFreed ? 'badge-danger' : 'badge-neutral') + '">' + (isFreed ? 'DELETE' : 'OWNED') + '</span>' +
+            '<span class="badge ' + (isFreed ? 'badge-danger' : 'badge-neutral') + '">' + (isFreed ? 'EXCLUSIVE' : 'OWNED') + '</span>' +
           '</div>';
       }
       for (const sharedPath of sharedFileSet) {
