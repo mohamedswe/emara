@@ -6,7 +6,7 @@ import type {
   SymbolKind,
 } from "../graph/types.js";
 import { validateRepositoryGraph } from "../graph/validateRepositoryGraph.ts";
-import { getSource } from "../retrieval/getSource.ts";
+import { createSourceReader, type SourceReader } from "../retrieval/getSource.ts";
 import type { SourceSlice } from "../retrieval/types.js";
 import { searchGraph } from "../retrieval/searchGraph.ts";
 import {
@@ -263,6 +263,9 @@ export function createContractDiscoveryTools(
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const filesById = new Map(graph.files.map((file) => [file.id, file]));
   const inspected = new Set<string>();
+  // The graph was validated above; reuse one reader instead of
+  // revalidating the whole graph on every tool call.
+  let readSource: SourceReader | undefined;
 
   const loadSource = async (
     id: string,
@@ -284,7 +287,7 @@ export function createContractDiscoveryTools(
       fileWide ? MAX_FILE_SOURCE_BYTES : MAX_SOURCE_BYTES,
       1,
     );
-    const value = await getSource(graph, repositoryPath, id, {
+    const value = await (readSource ??= createSourceReader(graph, repositoryPath))(id, {
       maxLines,
       maxBytes,
     });

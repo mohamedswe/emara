@@ -10,7 +10,7 @@ import {
 } from "../languages/languageFrontends.ts";
 import { sanitizeForTreeSitter } from "../parser/sanitizeForTreeSitter.ts";
 import type { ParsedSourceFile } from "../parser/types.js";
-import { getSource } from "../retrieval/getSource.ts";
+import { createSourceReader, type SourceReader } from "../retrieval/getSource.ts";
 import { isTestFilePath } from "../scanner/classifyFilePath.ts";
 import type { ScannedFile } from "../scanner/types.js";
 import type { DeadCodeCandidate } from "../audit/types.js";
@@ -169,6 +169,8 @@ async function readSourceFacts(
   indexedSourceFiles: readonly IndexedSourceFile[],
 ): Promise<ParsedSourceFact[]> {
   const facts: ParsedSourceFact[] = [];
+  // One validated reader per sweep, created only if a file must be re-read.
+  let readSource: SourceReader | undefined;
   const indexedSourcesByPath = new Map(
     indexedSourceFiles.map((source) => [source.file.path, source]),
   );
@@ -188,7 +190,7 @@ async function readSourceFacts(
       ? indexedSource
       : undefined;
     const slice = reusableSource === undefined
-      ? await getSource(graph, repositoryPath, file.id, {
+      ? await (readSource ??= createSourceReader(graph, repositoryPath))(file.id, {
           maxLines: file.lineRange.end,
           maxBytes: MAX_SOURCE_BYTES,
         })

@@ -4,7 +4,7 @@ import Python from "tree-sitter-python";
 import type { DeadCodeCandidate } from "../audit/types.js";
 import type { RepositoryGraph, SymbolNode } from "../graph/types.js";
 import { sanitizeForTreeSitter } from "../parser/sanitizeForTreeSitter.ts";
-import { getSource } from "../retrieval/getSource.ts";
+import { createSourceReader, type SourceReader } from "../retrieval/getSource.ts";
 
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 const PARSER_INPUT_CHUNK_SIZE = 16_384;
@@ -51,13 +51,15 @@ export async function filterFrameworkWiringCandidates(
     ),
   );
 
+  // One validated reader per sweep instead of revalidating the graph per file.
+  let readSource: SourceReader | undefined;
   for (const fileId of [...relevantFileIds].sort(compareText)) {
     const fileCandidates = candidatesByFileId.get(fileId) ?? [];
     const file = filesById.get(fileId);
     if (file === undefined || file.language !== "python" || file.lineRange === undefined) {
       continue;
     }
-    const slice = await getSource(graph, repositoryPath, file.id, {
+    const slice = await (readSource ??= createSourceReader(graph, repositoryPath))(file.id, {
       maxLines: file.lineRange.end,
       maxBytes: MAX_SOURCE_BYTES,
     });

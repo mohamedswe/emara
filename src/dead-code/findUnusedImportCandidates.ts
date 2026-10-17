@@ -5,7 +5,7 @@ import {
   parseWithLanguageFrontend,
 } from "../languages/languageFrontends.ts";
 import type { ParsedImport } from "../parser/types.js";
-import { getSource } from "../retrieval/getSource.ts";
+import { createSourceReader, type SourceReader } from "../retrieval/getSource.ts";
 import { isTestFilePath } from "../scanner/classifyFilePath.ts";
 import type { ScannedFile } from "../scanner/types.js";
 import type { DeadCodeCandidate } from "../audit/types.js";
@@ -26,6 +26,8 @@ export async function findUnusedImportCandidates(
   indexedSourceFiles: readonly IndexedSourceFile[] = [],
 ): Promise<DeadCodeCandidate[]> {
   const results: DeadCodeCandidate[] = [];
+  // One validated reader per sweep, created only if a file must be re-read.
+  let readSource: SourceReader | undefined;
   const indexedSourcesByPath = new Map(
     indexedSourceFiles.map((source) => [source.file.path, source]),
   );
@@ -45,7 +47,7 @@ export async function findUnusedImportCandidates(
       ? indexedSource
       : undefined;
     const slice = reusableSource === undefined
-      ? await getSource(graph, repositoryPath, file.id, {
+      ? await (readSource ??= createSourceReader(graph, repositoryPath))(file.id, {
           maxLines: file.lineRange.end,
           maxBytes: MAX_SOURCE_BYTES,
         })
