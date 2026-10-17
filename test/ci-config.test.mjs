@@ -124,6 +124,16 @@ test('Pages deploys only fresh builds from main after reusable CI with scoped pe
   assert.ok(deploy.steps.some(step => step.uses === 'actions/deploy-pages@v4'));
 });
 
+test('declares the minimum Node runtime consistently in package.json, the lockfile and README', () => {
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  const lock = JSON.parse(readFileSync(join(root, 'package-lock.json'), 'utf8'));
+  assert.equal(pkg.engines?.node, '>=22.6');
+  assert.equal(lock.packages[''].engines?.node, pkg.engines.node);
+  assert.match(readFileSync(join(root, 'README.md'), 'utf8'), /Node\.js 22\.6 or newer/u);
+  const [major, minor] = process.versions.node.split('.').map(Number);
+  assert.ok(major > 22 || (major === 22 && minor >= 6), 'tests must run on a supported Node');
+});
+
 test('all existing workflows remain valid YAML', () => {
   workflow('deploy-demo.yml');
   workflow('publish-auditor-image.yml');

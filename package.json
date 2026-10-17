@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
   "bin": {
     "auditor": "bin/auditor.mjs"
   },
