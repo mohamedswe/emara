@@ -27,7 +27,7 @@ Explore pre-computed interactive feature maps in your browser with zero installa
 
 ## Quickstart
 
-Use a clean Git checkout of a JavaScript, TypeScript, or Python repository you know. The current scanner does not generally honor `.gitignore`; old reports and other local files can affect an audit. Keep output outside the target repository. The target application's dependencies do not need to be installed.
+Use a clean Git checkout of a JavaScript, TypeScript, or Python repository you know. In a Git work tree the scanner reads tracked files plus untracked files that are not ignored (`git ls-files --cached --others --exclude-standard`); tracked files are included even if they match `.gitignore`. Folders without Git (and submodule directories) are walked in full. Either way, `node_modules`, build output directories and `.env*` files are skipped. Keep output outside the target repository. The target application's dependencies do not need to be installed.
 
 ### Run from source
 

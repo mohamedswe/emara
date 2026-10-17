@@ -1,5 +1,4 @@
-import { createHash } from "node:crypto";
-import { readFile, realpath } from "node:fs/promises";
+import { realpath } from "node:fs/promises";
 import {
   isAbsolute,
   join,
@@ -19,7 +18,7 @@ import {
   parseWithLanguageFrontend,
 } from "../languages/languageFrontends.ts";
 import type { ParsedSourceFile } from "../parser/types.js";
-import { scanRepository } from "../scanner/scanRepository.ts";
+import { scanRepositoryWithContents } from "../scanner/scanRepository.ts";
 import type { ScannedFile } from "../scanner/types.js";
 import { buildRepositoryGraph } from "./buildRepositoryGraph.ts";
 import type { IndexedSourceFile } from "./indexedSourceFile.ts";
@@ -50,7 +49,11 @@ export async function indexRepository(
     throw new Error("Repository path must not be empty");
   }
 
-  const scannedFiles = await scanRepository(repositoryPath);
+  // Supported sources are read once; their bytes are reused for parsing.
+  const { files: scannedFiles, contents } = await scanRepositoryWithContents(
+    repositoryPath,
+    { retainContent: isSupportedSourceFile },
+  );
   const repositoryRoot = await realpath(resolve(repositoryPath));
   const outputPath = resolveOutputPath(repositoryRoot, options.outputPath);
   const excludedRelativePaths = resolveExcludedRelativePaths(
@@ -62,9 +65,9 @@ export async function indexRepository(
     (file) => !excludedRelativePaths.has(file.path),
   );
   const frameworkRegistry = options.frameworkRegistry ?? DEFAULT_FRAMEWORK_REGISTRY;
-  const indexedSourceFiles = await parseScannedSourceFiles(
-    repositoryRoot,
+  const indexedSourceFiles = parseScannedSourceFiles(
     graphFiles,
+    contents,
     frameworkRegistry,
   );
   const parsedFiles = await addPackageScriptEntrypoints(
@@ -118,10 +121,11 @@ export async function indexRepository(
     graph,
     outputPath: writtenPath,
     support,
-    sourceFiles: indexedSourceFiles.filter((source) =>
-      createHash("sha256").update(source.content).digest("hex") ===
-        source.file.contentHash
-    ),
+    // Only sources whose decoded text round-trips to the hashed bytes.
+    sourceFiles: indexedSourceFiles.filter((source) => {
+      const bytes = contents.get(source.file.path);
+      return bytes !== undefined && Buffer.from(source.content, "utf8").equals(bytes);
+    }),
   };
 }
 
@@ -146,22 +150,23 @@ function resolveExcludedRelativePaths(
   );
 }
 
-async function parseScannedSourceFiles(
-  repositoryRoot: string,
+function parseScannedSourceFiles(
   files: readonly ScannedFile[],
+  contents: ReadonlyMap<string, Buffer>,
   frameworkRegistry: FrameworkRegistry,
-): Promise<IndexedSourceFile[]> {
-  return Promise.all(
-    files.filter(isSupportedSourceFile).map(async (file) => {
-      const absolutePath = join(repositoryRoot, ...file.path.split("/"));
-      const content = await readFile(absolutePath, "utf8");
-      return {
-        file,
-        content,
-        parsed: parseWithLanguageFrontend(file, content, frameworkRegistry),
-      };
-    }),
-  );
+): IndexedSourceFile[] {
+  return files.filter(isSupportedSourceFile).map((file) => {
+    const bytes = contents.get(file.path);
+    if (bytes === undefined) {
+      throw new Error(`Scanner did not retain source bytes for ${file.path}`);
+    }
+    const content = bytes.toString("utf8");
+    return {
+      file,
+      content,
+      parsed: parseWithLanguageFrontend(file, content, frameworkRegistry),
+    };
+  });
 }
 
 function resolveOutputPath(
