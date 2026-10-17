@@ -11,6 +11,7 @@ import {
   type ReachabilityOptions,
   type ReachabilityResult,
 } from "./reachability.ts";
+import { compareText } from "../shared/compare.ts";
 
 /**
  * Product liveness is deliberately separate from the legacy contract status.
@@ -333,8 +334,4 @@ function emptyCounts(): Record<ProductReachabilityStatus, number> {
     dynamic_unknown: 0,
     disconnected_candidate: 0,
   };
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

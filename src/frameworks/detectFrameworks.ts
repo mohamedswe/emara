@@ -5,6 +5,7 @@ import type {
   FrameworkPack,
 } from "./types.js";
 import type { ParsedSourceFile } from "../parser/types.js";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 export function detectFrameworksForFile(
   parsedFile: ParsedSourceFile,
@@ -69,8 +70,4 @@ function detected(pack: FrameworkPack, evidence: readonly string[]): DetectedFra
     support: pack.support,
     evidence,
   };
-}
-
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

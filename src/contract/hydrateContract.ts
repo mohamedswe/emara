@@ -31,6 +31,7 @@ import type {
   ContradictionReviewStatus,
   SoftwareContract,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 export interface ContractDiscoveryMetadataInput {
   provider: string;
@@ -794,8 +795,4 @@ function validateMetadata(metadata: ContractDiscoveryMetadataInput): void {
   ) {
     throw new Error("Inspected node IDs must be non-empty strings");
   }
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -11,6 +11,7 @@ import type {
   GraphSearchSeed,
   SearchGraphOptions,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 const DEFAULT_LIMITS: GraphSearchLimits = {
   maxSeeds: 5,
@@ -365,9 +366,6 @@ function compareEdges(
   );
 }
 
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
 
 function resolveLimits(options: SearchGraphOptions): GraphSearchLimits {
   return {

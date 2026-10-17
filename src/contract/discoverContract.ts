@@ -31,6 +31,7 @@ import type {
   ContractReviewTargetKind,
   SoftwareContract,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 export interface DiscoverContractOptions {
   model?: string;
@@ -1016,8 +1017,4 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function errorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   return message.slice(0, 2_000);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

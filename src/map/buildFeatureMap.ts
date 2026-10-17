@@ -29,6 +29,7 @@ import type {
   PortKind,
   SourceEvidence,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 const DEPENDENCY_EDGE_TYPES = new Set<Edge["type"]>([
   "IMPORTS",
@@ -1683,8 +1684,4 @@ function slugify(value: string): string {
 
 function stableHash(value: string): string {
   return createHash("sha256").update(value).digest("hex").slice(0, 16);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

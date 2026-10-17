@@ -27,6 +27,7 @@ import type {
   ParsedSymbol,
   ParseDiagnostic,
 } from "./types.js";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 const JAVASCRIPT_EXTENSIONS = new Set([".cjs", ".js", ".jsx", ".mjs"]);
 const TYPESCRIPT_EXTENSIONS = new Set([".cts", ".mts", ".ts"]);
@@ -2469,9 +2470,6 @@ function compareByLineRange(
   );
 }
 
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
 
 function createImport(input: {
   kind: ParsedImportKind;

@@ -20,6 +20,7 @@ import {
   type InternalModuleResolutionOptions,
 } from "./resolveInternalImports.ts";
 import { resolveSymbolReferenceEdges } from "./resolveSymbolReferences.ts";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 export interface BuildRepositoryGraphOptions
   extends InternalModuleResolutionOptions {
@@ -303,8 +304,4 @@ function compareParsedEntryPoints(
     compareStrings(left.name, right.name) ||
     compareStrings(left.handlerName ?? "", right.handlerName ?? "")
   );
-}
-
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -14,6 +14,7 @@ import { createSourceReader, type SourceReader } from "../retrieval/getSource.ts
 import { isTestFilePath } from "../scanner/classifyFilePath.ts";
 import type { ScannedFile } from "../scanner/types.js";
 import type { DeadCodeCandidate } from "../audit/types.js";
+import { compareText } from "../shared/compare.ts";
 
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 const SIMPLE_IDENTIFIER = /^[A-Za-z_$][\w$]*$/u;
@@ -610,8 +611,4 @@ function filePath(graph: RepositoryGraph, fileId: string): string | undefined {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

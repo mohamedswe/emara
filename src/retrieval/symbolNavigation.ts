@@ -6,6 +6,7 @@ import type {
   SymbolNode,
 } from "../graph/types.js";
 import { validateRepositoryGraph } from "../graph/validateRepositoryGraph.ts";
+import { compareText } from "../shared/compare.ts";
 
 export type SymbolNavigationRelationship =
   | "DEFINITION"
@@ -276,8 +277,4 @@ function compareResults(
     left.lineRange.end - right.lineRange.end ||
     compareText(left.nodeId, right.nodeId)
   );
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

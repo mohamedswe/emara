@@ -3,6 +3,7 @@ import type {
   JavaScriptFrameworkConventions,
   PythonFrameworkConventions,
 } from "./types.js";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 const NODE_HTTP: JavaScriptFrameworkConventions = {
   httpFactoryNames: [
@@ -513,8 +514,4 @@ function uniqueBy<T>(values: readonly T[], key: (value: T) => string): T[] {
   const byKey = new Map<string, T>();
   for (const value of values) byKey.set(key(value), value);
   return [...byKey.values()].sort((left, right) => compareStrings(key(left), key(right)));
-}
-
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -48,6 +48,7 @@ import {
   isNonProductDocumentationClaim,
   normalizeFeatureTitles,
 } from "./quarantineDocumentationClaims.ts";
+import { compareText } from "../shared/compare.ts";
 
 const DEFAULT_MODEL = "deepseek-chat";
 const MAX_OUTPUT_TOKENS = 5_000;
@@ -2892,8 +2893,4 @@ function parseCoverageLimitations(graph: RepositoryGraph): string[] {
       `${affected} file(s) they import or mention are classified dynamic_unknown instead of dead-code candidates; ` +
       "other dead-code candidates are less certain because unparsed files may hide further consumers.",
   ];
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

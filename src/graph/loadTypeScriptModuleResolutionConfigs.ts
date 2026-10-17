@@ -3,6 +3,7 @@ import { join, posix } from "node:path";
 
 import type { ScannedFile } from "../scanner/types.js";
 import type { TypeScriptModuleResolutionConfig } from "./resolveInternalImports.ts";
+import { compareText } from "../shared/compare.ts";
 
 export async function loadTypeScriptModuleResolutionConfigs(
   repositoryRoot: string,
@@ -136,8 +137,4 @@ function recordValue(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

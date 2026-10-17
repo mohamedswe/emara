@@ -8,6 +8,7 @@ import {
 import { createSourceReader } from "../retrieval/getSource.ts";
 import type { ScannedFile } from "../scanner/types.js";
 import type { FunctionalityFeature } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 const DEPENDENCY_MANIFEST_NAMES = new Set(["package.json", "requirements.txt"]);
@@ -461,8 +462,4 @@ function sortedUnique(values: readonly string[]): string[] {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

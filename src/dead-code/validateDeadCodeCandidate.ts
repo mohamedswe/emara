@@ -29,6 +29,7 @@ import {
   buildReachabilityLedger,
   type ReachabilityLedger,
 } from "../retrieval/reachabilityLedger.ts";
+import { compareText } from "../shared/compare.ts";
 
 const EXCLUDED_COPY_DIRECTORIES = new Set([
   ".git",
@@ -463,8 +464,4 @@ function commandLabel(command: DeadCodeValidationCommand): string {
 
 function boundedOutput(current: string, addition: string): string {
   return `${current}${addition}`.slice(-MAX_COMMAND_OUTPUT_CHARACTERS);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

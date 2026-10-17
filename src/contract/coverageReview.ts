@@ -17,6 +17,7 @@ import type {
   CoverageClassification,
   FeatureReachability,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 type SourceBearingFileNode = FileNode & {
   lineRange: { start: number; end: number };
@@ -431,8 +432,4 @@ function isSupportAccountedFinding(
     ((classification === "infrastructure" || classification === "utility") &&
       reachability !== "unknown")
   );
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

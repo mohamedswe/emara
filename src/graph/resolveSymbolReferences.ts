@@ -7,6 +7,7 @@ import {
   type InternalModuleResolutionOptions,
 } from "./resolveInternalImports.ts";
 import type { Edge, FileNode, SymbolNode } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 export function resolveSymbolReferenceEdges(
   files: readonly FileNode[],
@@ -312,8 +313,4 @@ function compareImports(left: ParsedImport, right: ParsedImport): number {
     compareText(left.source, right.source) ||
     compareText(left.importedName ?? "", right.importedName ?? "")
   );
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

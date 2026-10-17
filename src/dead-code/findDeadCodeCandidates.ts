@@ -9,6 +9,7 @@ import {
 } from "../retrieval/reachabilityLedger.ts";
 import type { DeadCodeCandidate } from "../audit/types.js";
 import { isTestFilePath } from "../scanner/classifyFilePath.ts";
+import { compareText } from "../shared/compare.ts";
 
 type CandidateNode = SymbolNode | EvidenceGraphNode;
 
@@ -121,8 +122,4 @@ export function findDeadCodeCandidates(
         compareText(left.file, right.file) ||
         compareText(left.symbol, right.symbol),
     );
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

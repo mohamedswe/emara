@@ -5,6 +5,7 @@ import type {
 } from "../graph/types.js";
 import { isTestFilePath } from "../scanner/classifyFilePath.ts";
 import { validateRepositoryGraph } from "../graph/validateRepositoryGraph.ts";
+import { compareText } from "../shared/compare.ts";
 
 export type ReachabilityStatus =
   | "reachable"
@@ -640,8 +641,4 @@ function comparePaths(left: EvidencePath, right: EvidencePath): number {
     left.edges.length - right.edges.length ||
     compareText(left.nodeIds.join("\u0000"), right.nodeIds.join("\u0000"))
   );
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

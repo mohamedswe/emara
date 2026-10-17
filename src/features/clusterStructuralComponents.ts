@@ -7,6 +7,7 @@ import type {
   RepositoryNode,
 } from "../graph/types.js";
 import { validateRepositoryGraph } from "../graph/validateRepositoryGraph.ts";
+import { compareText } from "../shared/compare.ts";
 
 const LEIDEN_RANDOM_SEED = 42;
 const CODE_LANGUAGES = new Set([
@@ -425,8 +426,4 @@ function slugify(value: string): string {
 
 function sortedUnique(values: readonly string[]): string[] {
   return [...new Set(values)].sort(compareText);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

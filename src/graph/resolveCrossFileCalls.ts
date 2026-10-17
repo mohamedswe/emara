@@ -8,6 +8,7 @@ import {
   type InternalModuleResolutionOptions,
 } from "./resolveInternalImports.ts";
 import type { Edge, FileNode, SymbolNode } from "./types.js";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 export function resolveCrossFileCallEdges(
   files: readonly FileNode[],
@@ -468,8 +469,4 @@ function compareCalls(left: ParsedCall, right: ParsedCall): number {
     compareStrings(left.caller ?? "", right.caller ?? "") ||
     compareStrings(left.callee, right.callee)
   );
-}
-
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -31,6 +31,7 @@ import {
   deriveFunctionalityAuditSummary,
   validateFunctionalityAudit,
 } from "./validateFunctionalityAudit.ts";
+import { compareText } from "../shared/compare.ts";
 
 export interface CliOptions {
   repositoryPath: string;
@@ -370,9 +371,6 @@ function deduplicateCandidates(
   );
 }
 
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
 
 function repositoryCommit(repositoryPath: string): string {
   return execFileSync(

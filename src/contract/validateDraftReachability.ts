@@ -7,6 +7,7 @@ import type {
   ContractDraft,
   FeatureReachability,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 export interface DraftReachabilityViolation {
   contractKind: "feature_dossier" | "capability" | "user_flow";
@@ -195,8 +196,4 @@ function violationReason(
   nodeStatus: ProductReachabilityStatus,
 ): string {
   return `Dossier reachability ${dossierStatus} cannot be supported by ${nodeStatus} implementation evidence.`;
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

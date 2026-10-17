@@ -11,6 +11,7 @@ import type {
   FileNode,
   SymbolNode,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 export interface EvidenceGraphExpansion {
   entities: EvidenceGraphNode[];
@@ -499,8 +500,4 @@ function compareEdges(left: Edge, right: Edge): number {
     compareText(left.evidence.file, right.evidence.file) ||
     (left.evidence.line ?? 0) - (right.evidence.line ?? 0)
   );
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

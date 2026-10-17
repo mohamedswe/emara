@@ -14,6 +14,7 @@ import type {
   ContractDraftContradictionReview,
   ContractDraftCoverageInvestigation,
 } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 export interface ContractCorrectionResult {
   draft: ContractDraft;
@@ -415,9 +416,6 @@ function errorMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).slice(0, 2_000);
 }
 
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

@@ -13,6 +13,7 @@ import {
   isProductCopySourcePath,
   isSupplementalSummarySourcePath,
 } from "./documentationSources.ts";
+import { compareText } from "../shared/compare.ts";
 
 export {
   isProductCopySourcePath,
@@ -659,8 +660,4 @@ function boundedText(value: string, maximum: number): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -6,6 +6,7 @@ import {
   resolveInternalModulePath,
 } from "./resolveInternalImports.ts";
 import type { PartialImportEvidence } from "./types.js";
+import { compareText } from "../shared/compare.ts";
 
 const MAX_MENTION_LENGTH = 300;
 const STRING_LITERAL_PATTERN = /(["'`])((?:(?!\1)[^\\\r\n]|\\.){1,300})\1/gu;
@@ -121,8 +122,4 @@ function moduleStem(path: string): string {
 
 function overlaps(left: LineRange, right: LineRange): boolean {
   return left.start <= right.end && right.start <= left.end;
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

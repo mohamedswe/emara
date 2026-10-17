@@ -5,6 +5,7 @@ import type { DeadCodeCandidate } from "../audit/types.js";
 import type { RepositoryGraph, SymbolNode } from "../graph/types.js";
 import { sanitizeForTreeSitter } from "../parser/sanitizeForTreeSitter.ts";
 import { createSourceReader, type SourceReader } from "../retrieval/getSource.ts";
+import { compareText } from "../shared/compare.ts";
 
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
 const PARSER_INPUT_CHUNK_SIZE = 16_384;
@@ -203,8 +204,4 @@ function groupByFile(symbols: readonly SymbolNode[]): Map<string, SymbolNode[]> 
     grouped.set(symbol.fileId, values);
   }
   return grouped;
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

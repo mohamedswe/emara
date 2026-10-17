@@ -11,6 +11,7 @@ import {
   type ReachabilityLedger,
   type ReachabilityLedgerEntry,
 } from "../retrieval/reachabilityLedger.ts";
+import { compareText } from "../shared/compare.ts";
 
 export type FeatureClusterMemberRole =
   | "entrypoint"
@@ -1144,9 +1145,6 @@ function slug(value: string): string {
     .replace(/^-|-$/gu, "") || "shared";
 }
 
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
 
 class MaxScoreQueue {
   readonly #values: ScoredPath[] = [];

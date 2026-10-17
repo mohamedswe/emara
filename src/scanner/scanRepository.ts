@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { extname, join, relative, resolve, sep } from "node:path";
 
 import type { ScannedFile } from "./types.js";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 const EXCLUDED_ENTRY_NAMES = new Set([
   ".expo",
@@ -323,16 +324,4 @@ function countNewlines(bytes: Buffer): number {
     count += 1;
   }
   return count;
-}
-
-function compareStrings(left: string, right: string): number {
-  if (left < right) {
-    return -1;
-  }
-
-  if (left > right) {
-    return 1;
-  }
-
-  return 0;
 }

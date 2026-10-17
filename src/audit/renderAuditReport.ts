@@ -5,6 +5,7 @@ import type {
   FunctionalityAudit,
 } from "./types.js";
 import { validateFunctionalityAudit } from "./validateFunctionalityAudit.ts";
+import { compareText } from "../shared/compare.ts";
 
 const STATUS_ORDER: readonly FeatureAuditStatus[] = [
   "IMPLEMENTED_DOCUMENTED",
@@ -182,8 +183,4 @@ function plainText(value: string): string {
 
 function counted(value: number, singular: string): string {
   return `${value} ${singular}${value === 1 ? "" : "s"}`;
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

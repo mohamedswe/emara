@@ -11,6 +11,7 @@ import {
 } from "./registry.ts";
 import { detectRepositoryFrameworks } from "./detectFrameworks.ts";
 import type { RepositorySupportReport } from "./types.js";
+import { compareText as compareStrings } from "../shared/compare.ts";
 
 const DEPENDENCY_MANIFEST_NAMES = new Set([
   "package.json", "pipfile", "pyproject.toml", "requirements.txt",
@@ -140,8 +141,4 @@ function normalizePackageName(value: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

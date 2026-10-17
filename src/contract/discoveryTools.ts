@@ -22,6 +22,7 @@ import {
   findImporters,
   findReferences,
 } from "../retrieval/symbolNavigation.ts";
+import { compareText } from "../shared/compare.ts";
 
 export interface ContractToolDefinition {
   type: "function";
@@ -756,9 +757,6 @@ function normalizeSearchText(value: string): string {
     .replace(/\s+/g, " ");
 }
 
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
 
 function symbolNavigationToolDefinitions(): ContractToolDefinition[] {
   const descriptions: Readonly<Record<string, string>> = {

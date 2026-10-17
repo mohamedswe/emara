@@ -6,6 +6,7 @@ import type {
   ParsedSourceFile,
 } from "../parser/types.js";
 import type { ScannedFile } from "../scanner/types.js";
+import { compareText } from "../shared/compare.ts";
 
 export async function addPackageScriptEntrypoints(
   repositoryRoot: string,
@@ -151,8 +152,4 @@ const ENVIRONMENT_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=\S+$/u;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }
