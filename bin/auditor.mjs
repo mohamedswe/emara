@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
+import { constants } from "node:os";
 import { fileURLToPath } from "node:url";
 
 const cliPath = fileURLToPath(
@@ -12,8 +13,11 @@ const child = spawn(
   { stdio: "inherit", windowsHide: true },
 );
 
+const forwarders = new Map();
 for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.on(signal, () => child.kill(signal));
+  const forward = () => child.kill(signal);
+  forwarders.set(signal, forward);
+  process.on(signal, forward);
 }
 
 child.on("error", (error) => {
@@ -22,6 +26,10 @@ child.on("error", (error) => {
 });
 child.on("exit", (code, signal) => {
   if (signal !== null) {
+    // Re-raise so the caller sees the same signal. Our forwarders must be
+    // removed first, or they would swallow it and the shim would exit 0.
+    for (const [name, forward] of forwarders) process.off(name, forward);
+    process.exitCode = 128 + (constants.signals[signal] ?? 0);
     process.kill(process.pid, signal);
     return;
   }
