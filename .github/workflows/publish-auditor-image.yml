@@ -35,6 +35,16 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js for container smoke test
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build and verify non-root container
+        run: |
+          docker build -t emara:release-check .
+          node scripts/smoke-container.mjs emara:release-check
+
       - name: Set image name
         shell: bash
         run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"

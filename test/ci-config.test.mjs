@@ -134,6 +134,17 @@ test('declares the minimum Node runtime consistently in package.json, the lockfi
   assert.ok(major > 22 || (major === 22 && minor >= 6), 'tests must run on a supported Node');
 });
 
+test('image publishing smoke-tests the non-root container before pushing', () => {
+  const publish = workflow('publish-auditor-image.yml');
+  const steps = publish.jobs.publish.steps;
+  const smoke = steps.findIndex(step => (step.run ?? '').includes('node scripts/smoke-container.mjs'));
+  const push = steps.findIndex(step => step.uses?.startsWith('docker/build-push-action') && step.with?.push === true);
+  assert.ok(smoke >= 0, 'smoke test step missing');
+  assert.ok(push > smoke, 'smoke test must run before the image is pushed');
+  const script = readFileSync(join(root, 'scripts/smoke-container.mjs'), 'utf8');
+  for (const flag of ["'--network', 'none'", "'--read-only'", "'--cap-drop', 'ALL'", ':ro']) assert.ok(script.includes(flag), flag);
+});
+
 test('all existing workflows remain valid YAML', () => {
   workflow('deploy-demo.yml');
   workflow('publish-auditor-image.yml');
