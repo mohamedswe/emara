@@ -429,7 +429,10 @@ export async function buildFunctionalityAudit(
       totalTokens: totals.promptTokens + totals.completionTokens,
       cache: options.cache ?? "cold",
     },
-    limitations: identifiedSemantic.limitations,
+    limitations: [
+      ...identifiedSemantic.limitations,
+      ...parseCoverageLimitations(graph),
+    ],
   };
   const audit: FunctionalityAudit = {
     ...auditWithoutSummary,
@@ -2872,6 +2875,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function errorMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).slice(0, 4_000);
+}
+
+/**
+ * Files with parser diagnostics are excluded from the graph. Say so, because
+ * anything only they consume would otherwise look unused.
+ */
+function parseCoverageLimitations(graph: RepositoryGraph): string[] {
+  const unparsed = graph.analysis.unparsedSourceFiles;
+  if (unparsed.length === 0) return [];
+  const shown = unparsed.slice(0, 10).join(", ");
+  const more = unparsed.length > 10 ? `, and ${unparsed.length - 10} more` : "";
+  const affected = new Set((graph.analysis.partialImports ?? []).map((item) => item.target)).size;
+  return [
+    `${unparsed.length} of ${graph.analysis.sourceFileCount} source files could not be fully parsed and are excluded from the graph (${shown}${more}). ` +
+      `${affected} file(s) they import or mention are classified dynamic_unknown instead of dead-code candidates; ` +
+      "other dead-code candidates are less certain because unparsed files may hide further consumers.",
+  ];
 }
 
 function compareText(left: string, right: string): number {

@@ -159,11 +159,25 @@ export interface RepositoryGraphDiagnostic {
   line: number;
 }
 
+/**
+ * Evidence that a file with parser diagnostics (excluded from the graph) may
+ * consume `target`. Partial by construction: it can lower liveness
+ * certainty but never proves reachability. Never represented as an edge.
+ */
+export interface PartialImportEvidence {
+  file: string;
+  line: number;
+  target: string;
+  kind: "recovered-import" | "string-mention";
+}
+
 export interface RepositoryGraphAnalysis {
   sourceFileCount: number;
   parsedSourceFileCount: number;
   unparsedSourceFiles: string[];
   diagnostics: RepositoryGraphDiagnostic[];
+  /** Present only when at least one unparsed file yields evidence. */
+  partialImports?: PartialImportEvidence[];
 }
 
 export interface RepositoryGraph {

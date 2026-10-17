@@ -154,6 +154,11 @@ export function validateRepositoryGraph(
         );
       }
     }
+    for (const { location, path } of analysis.partialImportPaths) {
+      if (!fileIdsByPath.has(path)) {
+        issues.push(`${location} references missing file ${JSON.stringify(path)}`);
+      }
+    }
   }
 
   for (const [index, rawSymbol] of symbols.entries()) {
@@ -446,6 +451,7 @@ function validateGraphAnalysis(
 ): {
   unparsedSourceFiles: string[];
   diagnostics: Array<{ file: string }>;
+  partialImportPaths: Array<{ location: string; path: string }>;
 } | undefined {
   if (!isRecord(value)) {
     issues.push("analysis must be an object");
@@ -511,7 +517,37 @@ function validateGraphAnalysis(
     }
     if (file !== undefined) diagnostics.push({ file });
   }
-  return { unparsedSourceFiles, diagnostics };
+
+  const partialImportPaths: Array<{ location: string; path: string }> = [];
+  if (value.partialImports !== undefined) {
+    const rawPartialImports = arrayField(value, "partialImports", issues);
+    if (rawPartialImports.length === 0) {
+      issues.push("analysis.partialImports must be omitted when empty");
+    }
+    for (const [index, item] of rawPartialImports.entries()) {
+      const location = `analysis.partialImports[${index}]`;
+      if (!isRecord(item)) {
+        issues.push(`${location} must be an object`);
+        continue;
+      }
+      if (item.kind !== "recovered-import" && item.kind !== "string-mention") {
+        issues.push(`${location}.kind is invalid`);
+      }
+      const file = nonEmptyStringField(item, "file", location, issues);
+      const target = nonEmptyStringField(item, "target", location, issues);
+      if (!Number.isInteger(item.line) || (item.line as number) < 1) {
+        issues.push(`${location}.line must be a positive integer`);
+      }
+      if (file !== undefined) {
+        if (!unparsedSeen.has(file)) {
+          issues.push(`${location}.file must be listed in analysis.unparsedSourceFiles`);
+        }
+        partialImportPaths.push({ location: `${location}.file`, path: file });
+      }
+      if (target !== undefined) partialImportPaths.push({ location: `${location}.target`, path: target });
+    }
+  }
+  return { unparsedSourceFiles, diagnostics, partialImportPaths };
 }
 
 function validateEdge(

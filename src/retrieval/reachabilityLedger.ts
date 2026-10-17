@@ -197,6 +197,23 @@ function classifyNode(
       [`${diagnostic.kind}: ${diagnostic.message}`],
     );
   }
+  const partialConsumers = owner === undefined
+    ? []
+    : (graph.analysis.partialImports ?? []).filter((item) => item.target === owner.path);
+  if (partialConsumers.length > 0) {
+    return entry(
+      node.id,
+      "dynamic_unknown",
+      "tentative",
+      "A source file that could not be fully parsed imports or mentions this file, so consumers may be hidden.",
+      [],
+      exported,
+      meaningfulIncidentEdges,
+      partialConsumers.map((item) =>
+        `${item.file}:${item.line}: ${item.kind === "recovered-import" ? "partially parsed import" : "mentions this module"} (${item.target})`
+      ),
+    );
+  }
   if (meaningfulIncidentEdges > 0) {
     return entry(
       node.id,

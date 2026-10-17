@@ -23,6 +23,17 @@ test("rejects missing and inconsistent graph analysis metadata", () => {
   );
 });
 
+test("validates optional partial import evidence from unparsed files", () => {
+  const graph = validGraph();
+  const path = graph.files[0].path;
+  graph.analysis.partialImports = [];
+  assert.throws(() => validateRepositoryGraph(graph), /partialImports must be omitted when empty/u);
+  graph.analysis.partialImports = [{ file: path, line: 1, target: path, kind: "recovered-import" }];
+  assert.throws(() => validateRepositoryGraph(graph), /must be listed in analysis.unparsedSourceFiles/u);
+  graph.analysis.partialImports = [{ file: path, line: 0, target: "missing.js", kind: "guess" }];
+  assert.throws(() => validateRepositoryGraph(graph), /kind is invalid[\s\S]*line must be a positive integer|line must be a positive integer[\s\S]*kind is invalid/u);
+});
+
 test("rejects duplicate IDs, paths, and evidence-bearing edges", () => {
   const graph = validGraph();
   graph.files.push({ ...graph.files[0], path: "src/copy.ts" });

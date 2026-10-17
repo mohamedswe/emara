@@ -188,6 +188,21 @@ test("surfaces validation setup failures in blockers and stderr instead of silen
   assert.match(notices.join("\n"), /dead\.js.*Isolated validation failed: .*ENOENT/u);
 });
 
+test("report states unparsed files and does not offer their imports for deletion", async (context) => {
+  const repositoryPath = await createFixtureRepo(context);
+  await writeFixture(repositoryPath, "broken.js", 'import { dormant } from "./dead.js";\nexport function broken() { return dormant( ; }\n');
+  const auditPath = join(repositoryPath, "audit-output", "functionality-audit.json");
+
+  await runFunctionalityAuditCli([repositoryPath, "--deterministic"]);
+
+  const audit = JSON.parse(await readFile(auditPath, "utf8"));
+  const deadCandidate = audit.deadCodeCandidates.find((c) => c.file === "dead.js");
+  assert.equal(deadCandidate?.verdict, "UNKNOWN_DYNAMIC_USAGE");
+  assert.equal(audit.summary.ready_for_delete_validation, 0);
+  const report = await readFile(join(repositoryPath, "audit-output", "audit-report.md"), "utf8");
+  assert.match(report, /## Limitations\n\n- 1 of 3 source files could not be fully parsed and are excluded from the graph \(broken\.js\)\. 1 file\(s\) they import or mention are classified dynamic_unknown/u);
+});
+
 test("model opt-in emits an endpoint egress notice on stderr before work", async (context) => {
   const repositoryPath = await createFixtureRepo(context);
   const previous = { key: process.env.DEEPSEEK_API_KEY, url: process.env.DEEPSEEK_BASE_URL };

@@ -26,6 +26,7 @@ import type { IndexedSourceFile } from "./indexedSourceFile.ts";
 import { loadTypeScriptModuleResolutionConfigs } from "./loadTypeScriptModuleResolutionConfigs.ts";
 import { addPackageScriptEntrypoints } from "./packageScriptEntrypoints.ts";
 import { writeRepositoryGraph } from "./persistRepositoryGraph.ts";
+import { recoverPartialImports } from "./recoverPartialImports.ts";
 import type { RepositoryGraph } from "./types.js";
 
 export interface IndexRepositoryOptions {
@@ -84,6 +85,22 @@ export async function indexRepository(
     repositoryRoot,
     graphFiles,
   );
+  // Files with diagnostics stay out of the graph, but whatever they may
+  // import is recorded so it is not mistaken for disconnected code.
+  const unparsedPaths = new Set(support.unparsedSourceFiles);
+  const contentByPath = new Map(
+    indexedSourceFiles.map((source) => [source.file.path, source.content]),
+  );
+  const partialImports = recoverPartialImports(
+    parsedFiles.flatMap((parsed) => {
+      const content = contentByPath.get(parsed.path);
+      return unparsedPaths.has(parsed.path) && content !== undefined
+        ? [{ parsed, content }]
+        : [];
+    }),
+    graphFiles.filter(isSupportedSourceFile).map((file) => file.path),
+    { typeScriptConfigs },
+  );
   const graph = buildRepositoryGraph(graphFiles, graphParsedFiles, {
     typeScriptConfigs,
     analysis: {
@@ -92,6 +109,7 @@ export async function indexRepository(
       parsedSourceFileCount: support.parsedFiles,
       unparsedSourceFiles: [...support.unparsedSourceFiles],
       diagnostics: support.diagnostics.map((diagnostic) => ({ ...diagnostic })),
+      ...(partialImports.length > 0 ? { partialImports } : {}),
     },
   });
   const writtenPath = await writeRepositoryGraph(graph, outputPath);

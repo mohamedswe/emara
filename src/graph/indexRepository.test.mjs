@@ -6,6 +6,8 @@ import { afterEach, test } from "node:test";
 
 import { indexRepository } from "./indexRepository.ts";
 import { validateRepositoryGraph } from "./validateRepositoryGraph.ts";
+import { findDeadCodeCandidates } from "../dead-code/findDeadCodeCandidates.ts";
+import { buildReachabilityLedger } from "../retrieval/reachabilityLedger.ts";
 
 const temporaryRepositories = [];
 
@@ -212,6 +214,57 @@ test("keeps files with parser diagnostics visible without indexing partial symbo
     diagnostic.kind === "parse-error" && diagnostic.file === "src/broken.ts"
   ));
   validateRepositoryGraph(result.graph);
+});
+
+test("a file imported only by an unparsed file is not reported as dead code", async () => {
+  const repositoryPath = await createTemporaryRepository();
+  await writeFixture(repositoryPath, "app.js", 'import { run } from "./a.js";\nrouter.get("/health", run);\n');
+  await writeFixture(repositoryPath, "a.js", 'import { helper } from "./b.js";\nexport function run() { return helper( ; }\n');
+  await writeFixture(repositoryPath, "b.js", "export function helper() { return 1; }\n");
+  await writeFixture(repositoryPath, "orphan.js", "export function orphan() { return 2; }\n");
+
+  const { graph } = await indexRepository(repositoryPath);
+
+  assert.deepEqual(graph.analysis.unparsedSourceFiles, ["a.js"]);
+  assert.deepEqual(
+    graph.analysis.partialImports?.filter((item) => item.target === "b.js").map((item) => item.kind),
+    ["recovered-import", "string-mention"],
+  );
+  const ledger = buildReachabilityLedger(graph);
+  const status = (nodeId) => ledger.entries.find((entry) => entry.nodeId === nodeId)?.status;
+  assert.equal(status("file:b.js"), "dynamic_unknown");
+  assert.equal(status("function:b.js:helper"), "dynamic_unknown");
+  assert.match(
+    ledger.entries.find((entry) => entry.nodeId === "function:b.js:helper").blockers.join(" "),
+    /a\.js:1: partially parsed import \(b\.js\)/u,
+  );
+  const candidates = findDeadCodeCandidates(graph);
+  const verdictOf = (file) => candidates.find((candidate) => candidate.file === file)?.verdict;
+  assert.equal(verdictOf("b.js"), "UNKNOWN_DYNAMIC_USAGE", "b.js must not be ready for deletion validation");
+  assert.equal(verdictOf("orphan.js"), "VALIDATION_REQUIRED", "unrelated orphans stay candidates");
+  validateRepositoryGraph(graph);
+});
+
+test("Python modules named in an unparsed file's import lines are downgraded", async () => {
+  const repositoryPath = await createTemporaryRepository();
+  await writeFixture(repositoryPath, "service.py", "from models import Used\ndef handler(:\n    return Used()\n");
+  await writeFixture(repositoryPath, "models.py", "class Used:\n    pass\n");
+
+  const { graph } = await indexRepository(repositoryPath);
+
+  assert.deepEqual(graph.analysis.unparsedSourceFiles, ["service.py"]);
+  assert.ok(graph.analysis.partialImports?.some((item) => item.file === "service.py" && item.target === "models.py"));
+  const models = findDeadCodeCandidates(graph).filter((candidate) => candidate.file === "models.py");
+  assert.ok(models.every((candidate) => candidate.verdict === "UNKNOWN_DYNAMIC_USAGE"));
+  assert.equal(buildReachabilityLedger(graph).entries.find((entry) => entry.nodeId === "file:models.py")?.status, "dynamic_unknown");
+});
+
+test("omits partialImports when every file parses, keeping graph.json unchanged", async () => {
+  const repositoryPath = await createTemporaryRepository();
+  await writeFixture(repositoryPath, "a.js", 'import { helper } from "./b.js";\nexport const run = () => helper();\n');
+  await writeFixture(repositoryPath, "b.js", "export function helper() { return 1; }\n");
+  const { graph } = await indexRepository(repositoryPath);
+  assert.equal("partialImports" in graph.analysis, false);
 });
 
 async function createTemporaryRepository() {
