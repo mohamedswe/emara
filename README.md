@@ -40,7 +40,7 @@ npm ci
 npm run auditor -- "/absolute/path/to/repo" --deterministic --output "../mapping-output/functionality-audit.json" --graph "../mapping-output/graph.json"
 ```
 
-Replace `/absolute/path/to/repo` with your target path. Windows accepts forward-slash paths such as `C:/projects/client-app`. `../mapping-output` is relative to the Emara checkout; choose another output directory if that would put results inside your target.
+Replace `/absolute/path/to/repo` with your target path. Windows accepts forward-slash paths such as `C:/projects/client-app`. Relative paths (the repository argument, `--output`, `--graph`, `--oracle`) resolve against the directory you run the command from; with `npm run auditor` that is the directory where you invoked npm. Without `--output`/`--graph`, results go to `./emara-output/` in that directory. In the example above you ran npm inside the Emara checkout, so `../mapping-output` sits next to it; choose another directory if that would put results inside your target.
 
 ### Interactive feature map visualizer
 
@@ -61,6 +61,8 @@ If native package installation needs a compiler, use Docker instead. With Docker
 ```sh
 docker run --rm -v "/absolute/path/to/repo:/repo:ro" -v "/absolute/path/to/output:/output" ghcr.io/mohamedswe/emara:latest /repo --deterministic --output /output/functionality-audit.json --graph /output/graph.json
 ```
+
+Without `--output`/`--graph`, the container writes to `/output/emara-output/`.
 
 Use absolute forward-slash Windows paths in PowerShell, for example `C:/projects/client-app:/repo:ro` and `C:/projects/emara-output:/output`.
 

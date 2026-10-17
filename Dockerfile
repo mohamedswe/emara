@@ -33,5 +33,7 @@ RUN chmod +x /app/bin/auditor.mjs /app/bin/docker-entrypoint.sh \
 # Analyze untrusted repositories as the image's unprivileged user (UID 1000).
 # /app stays root-owned, so the auditor process cannot modify its own code.
 USER node
+# Default output (./emara-output) lands in the mounted /output volume.
+WORKDIR /output
 
 ENTRYPOINT ["/app/bin/docker-entrypoint.sh"]

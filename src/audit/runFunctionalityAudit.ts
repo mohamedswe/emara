@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
-import { basename, dirname, isAbsolute, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { loadContractEnvironment } from "../contract/buildContract.ts";
@@ -44,7 +44,6 @@ export interface CliOptions {
   validationCommands: DeadCodeValidationCommand[];
 }
 
-const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export async function runFunctionalityAuditCli(
   args: readonly string[] = process.argv.slice(2),
@@ -239,8 +238,10 @@ export function parseArguments(args: string[]): CliOptions {
       "Usage: auditor <repository> [--deterministic] [--output path] [--graph path] [--expected-commit sha] [--oracle path] [--model name] [--validate-dead-code] [--validation-command <label>::<cmd>]",
     );
   }
-  const repositoryPath = resolve(repositoryArg);
-  const outputDirectory = resolve(repositoryPath, "audit-output");
+  const repositoryPath = resolve(callerWorkingDirectory(), repositoryArg);
+  // Outputs default to ./emara-output under the caller's working directory,
+  // not inside the analyzed repository.
+  const outputDirectory = resolve(callerWorkingDirectory(), "emara-output");
   let outputPath = resolve(outputDirectory, "functionality-audit.json");
   let graphPath = resolve(outputDirectory, "graph.json");
   let expectedCommit: string | undefined;
@@ -398,8 +399,24 @@ async function writeTextAtomically(path: string, value: string): Promise<void> {
   await rename(temporaryPath, path);
 }
 
+/** Relative CLI paths resolve against the caller's working directory. */
 function absolutePath(value: string): string {
-  return isAbsolute(value) ? resolve(value) : resolve(projectRoot, value);
+  return resolve(callerWorkingDirectory(), value);
+}
+
+const NPM_AUDIT_SCRIPTS = new Set(["auditor", "audit:functionality"]);
+
+/**
+ * `npm run` executes package scripts from the package root; npm records the
+ * directory the user ran it from in INIT_CWD. Honor it only for this
+ * package's own audit scripts so an inherited INIT_CWD cannot leak in.
+ */
+export function callerWorkingDirectory(env: NodeJS.ProcessEnv = process.env): string {
+  const initCwd = env.INIT_CWD;
+  return initCwd !== undefined && initCwd.length > 0 &&
+      NPM_AUDIT_SCRIPTS.has(env.npm_lifecycle_event ?? "")
+    ? resolve(initCwd)
+    : process.cwd();
 }
 
 const entryPath = process.argv[1];

@@ -32,22 +32,55 @@ test("rejects conflicting egress mode flags in either order", () => {
   }
 });
 
-test("defaults output artifacts inside the target repository", () => {
-  const repositoryPath = resolve("fixture-repository");
+test("defaults output artifacts to ./emara-output under the caller's cwd, outside the target", (context) => {
+  const originalCwd = process.cwd();
+  context.after(() => process.chdir(originalCwd));
+  process.chdir(tmpdir());
+  const repositoryPath = resolve(originalCwd, "fixture-repository");
   const options = parseArguments([repositoryPath, "--deterministic"]);
 
   assert.equal(options.repositoryPath, repositoryPath);
-  assert.equal(
-    options.outputPath,
-    resolve(repositoryPath, "audit-output", "functionality-audit.json"),
-  );
-  assert.equal(
-    options.graphPath,
-    resolve(repositoryPath, "audit-output", "graph.json"),
-  );
+  assert.equal(options.outputPath, resolve(tmpdir(), "emara-output", "functionality-audit.json"));
+  assert.equal(options.graphPath, resolve(tmpdir(), "emara-output", "graph.json"));
   assert.equal(options.deterministic, true);
   assert.equal(options.validateDeadCode, false);
   assert.deepEqual(options.validationCommands, []);
+});
+
+test("relative --output, --graph and --oracle resolve against the caller's cwd", (context) => {
+  const originalCwd = process.cwd();
+  context.after(() => process.chdir(originalCwd));
+  process.chdir(tmpdir());
+  const options = parseArguments([
+    "fixture-repository",
+    "--output", "custom/audit.json",
+    "--graph", "custom/graph.json",
+    "--oracle", "oracles/expected.json",
+  ]);
+  assert.equal(options.repositoryPath, resolve(tmpdir(), "fixture-repository"));
+  assert.equal(options.outputPath, resolve(tmpdir(), "custom", "audit.json"));
+  assert.equal(options.graphPath, resolve(tmpdir(), "custom", "graph.json"));
+  assert.equal(options.oraclePath, resolve(tmpdir(), "oracles", "expected.json"));
+});
+
+test("under npm run auditor, relative paths resolve against the directory npm was run from", (context) => {
+  const saved = { init: process.env.INIT_CWD, event: process.env.npm_lifecycle_event };
+  context.after(() => {
+    for (const [key, value] of [["INIT_CWD", saved.init], ["npm_lifecycle_event", saved.event]]) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+  const callerDirectory = join(tmpdir(), "caller-directory");
+  process.env.INIT_CWD = callerDirectory;
+  process.env.npm_lifecycle_event = "auditor";
+  const options = parseArguments([".", "--graph", "out/graph.json"]);
+  assert.equal(options.repositoryPath, callerDirectory);
+  assert.equal(options.graphPath, resolve(callerDirectory, "out", "graph.json"));
+  assert.equal(options.outputPath, resolve(callerDirectory, "emara-output", "functionality-audit.json"));
+
+  process.env.npm_lifecycle_event = "test";
+  assert.equal(parseArguments(["."]).repositoryPath, process.cwd(), "INIT_CWD from other scripts is ignored");
 });
 
 test("accepts deterministic as a valueless flag among valued options", () => {
@@ -119,6 +152,7 @@ test("runs deterministic audit with --validate-dead-code promoting disconnected 
 
   await runFunctionalityAuditCli([
     repositoryPath,
+    ...outputArgs(repositoryPath),
     "--deterministic",
     "--validate-dead-code",
     `--validation-command=check::"${process.execPath}" --check app.js`,
@@ -149,6 +183,7 @@ test("runs deterministic audit with failing validation command keeping candidate
 
   await runFunctionalityAuditCli([
     repositoryPath,
+    ...outputArgs(repositoryPath),
     "--deterministic",
     "--validate-dead-code",
     `--validation-command=failing-check::"${process.execPath}" --check nonexistent_file.js`,
@@ -175,6 +210,7 @@ test("surfaces validation setup failures in blockers and stderr instead of silen
 
   await runFunctionalityAuditCli([
     repositoryPath,
+    ...outputArgs(repositoryPath),
     "--deterministic",
     "--validate-dead-code",
     "--validation-command=missing-validator-executable-87c922",
@@ -193,7 +229,7 @@ test("report states unparsed files and does not offer their imports for deletion
   await writeFixture(repositoryPath, "broken.js", 'import { dormant } from "./dead.js";\nexport function broken() { return dormant( ; }\n');
   const auditPath = join(repositoryPath, "audit-output", "functionality-audit.json");
 
-  await runFunctionalityAuditCli([repositoryPath, "--deterministic"]);
+  await runFunctionalityAuditCli([repositoryPath, ...outputArgs(repositoryPath), "--deterministic"]);
 
   const audit = JSON.parse(await readFile(auditPath, "utf8"));
   const deadCandidate = audit.deadCodeCandidates.find((c) => c.file === "dead.js");
@@ -228,6 +264,14 @@ test("Docker forwards explicit mode flags without inferring consent from credent
   assert.equal(script.includes("DEEPSEEK_API_KEY"), false);
   assert.match(script, /exec node.*"\$@"/u);
 });
+
+/** Keep each test's artifacts in its own temporary repository directory. */
+function outputArgs(repositoryPath) {
+  return [
+    "--output", join(repositoryPath, "audit-output", "functionality-audit.json"),
+    "--graph", join(repositoryPath, "audit-output", "graph.json"),
+  ];
+}
 
 async function createFixtureRepo(context) {
   const repositoryPath = await mkdtemp(join(tmpdir(), "cli-delete-validation-"));
