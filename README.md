@@ -14,12 +14,12 @@ Current status: early CLI for developer investigation. Documentation matching an
 
 ## Interactive Architecture Visualizer
 
-Explore pre-computed interactive feature maps in your browser with zero installation (AST slicing, dependency flow, simulated removal blast radius, and exact source inspection):
+Browse static snapshot demos in your browser with no installation. Each page shows features, shared subsystems, dependency flow, exact source excerpts, and a "Simulate Removal" preview of which files are statically exclusive to a feature. That preview is not deletion validation. The demos are fixed historical results for pinned commits, rebuilt by CI from SHA-256-pinned inputs in [`demo-data/`](demo-data/README.md); they do not analyze anything you enter.
 
-- [**louislam/uptime-kuma** (85k★ · Node + Express + Vue) →](https://mohamedswe.github.io/emara/uptime-kuma.html)
-- [**fastapi/full-stack-fastapi-template** (40k★ · FastAPI + React + SQLModel) →](https://mohamedswe.github.io/emara/fastapi-template.html)
-- [**alan2207/bulletproof-react** (35k★ · Next.js / React Architecture) →](https://mohamedswe.github.io/emara/bulletproof-react.html)
-- [**Explore the interactive landing hub →**](https://mohamedswe.github.io/emara/)
+- [**louislam/uptime-kuma** (Node + Express + Vue) →](https://mohamedswe.github.io/emara/uptime-kuma.html)
+- [**fastapi/full-stack-fastapi-template** (FastAPI + React + SQLModel) →](https://mohamedswe.github.io/emara/fastapi-template.html)
+- [**alan2207/bulletproof-react** (React / Next.js) →](https://mohamedswe.github.io/emara/bulletproof-react.html)
+- [**Snapshot index →**](https://mohamedswe.github.io/emara/)
 
 [![Watch the Emara walkthrough preview](docs/media/emara-preview.png)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4)
 
@@ -50,7 +50,7 @@ To start the local visualizer workspace and explore architectural flows:
 npm run serve
 ```
 
-Open `http://localhost:4173` in your browser (or use the URL printed by the server).
+Open `http://localhost:4173` in your browser (or use the URL printed by the server; pass another port with `npm run serve -- <port>` or `PORT`). The server listens on 127.0.0.1 only. It analyzes deterministically (no model requests) and parses rather than executes code. Accepted inputs are `owner/repo@commit` (or a GitHub commit/tree URL), which **fetches that public GitHub repository over the network** into a temporary directory, and local presets, which appear only if checkouts exist under `<temp>/emara-famous-repos/`.
 
 The local server requires its per-session token for analysis requests, rejects foreign hosts/origins, and accepts JSON bodies up to 16 KiB. It runs one distinct analysis at a time and coalesces identical in-flight requests. Its retained payload cache is limited to eight entries and 64 MiB of serialized JSON; this does not cap a single analysis's peak memory or clone size.
 
@@ -117,6 +117,10 @@ This is static analysis, not a language type checker or a runtime tracer. Go, Ru
 - Change blast-radius analysis: show which features and shared subsystems can be affected when a file or symbol changes.
 - Certification reports for reproducible release evidence and policy gates.
 - Deeper language and framework support, with the same exact-source evidence requirements.
+
+## Security
+
+Read [SECURITY.md](SECURITY.md) before analyzing unfamiliar code or running validation commands.
 
 ## License
 

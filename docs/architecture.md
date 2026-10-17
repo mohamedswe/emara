@@ -4,9 +4,9 @@ Software Auditor separates facts that can be reproduced from language-model deco
 
 ## Graph v4
 
-The scanner computes a SHA-256 content hash and line count for every supported source file. Language frontends then emit normalized file, symbol, entrypoint, endpoint, component, screen, schema, configuration, test, and event nodes. Structural and semantic relationships carry their own file-and-line evidence and identify whether the scanner, parser, or resolver extracted the fact.
+The scanner selects files (in a Git work tree: tracked plus untracked-but-not-ignored files; otherwise a directory walk, always skipping dependency/build directories and `.env*`) and computes a SHA-256 content hash and line count for every selected file. Language frontends then emit normalized file, symbol, entrypoint, endpoint, component, screen, schema, configuration, test, and event nodes. Structural and semantic relationships carry their own file-and-line evidence and identify whether the scanner, parser, or resolver extracted the fact.
 
-Graph v4 stores parser coverage and diagnostics with the graph, so an unparsed file or unresolved framework registration cannot disappear from later validation. Source retrieval resolves paths inside the repository, enforces line and byte limits, rereads the file, and compares its current SHA-256 hash with the indexed hash. A mismatch fails closed instead of returning stale evidence.
+Graph v4 stores parser coverage and diagnostics with the graph, so an unparsed file or unresolved framework registration cannot disappear from later validation. Files with parse diagnostics contribute no nodes or edges; instead, imports recovered from their error-tolerant parse tree and module-path/basename mentions are stored as `analysis.partialImports`, and any file they may consume is classified `dynamic_unknown` rather than disconnected. Source retrieval resolves paths inside the repository, enforces line and byte limits, rereads the file, and compares its current SHA-256 hash with the indexed hash. A mismatch fails closed instead of returning stale evidence.
 
 ```text
 repository
@@ -46,7 +46,7 @@ Reachability constrains feature membership. Disconnected candidates and unproven
 
 The deterministic pipeline extracts documentation promises, entrypoints, source evidence, feature memberships, status inputs, and dead-code candidates before any model request. Documentation-only claims stay quarantined when there is no deterministic feature match.
 
-In assisted mode, the only model backend is DeepSeek. It receives a locked inventory and may propose human-readable feature titles plus bounded promise mappings. It cannot add, remove, split, merge, or reclassify features, and it never returns verdict-bearing fields. Suggested mappings are accepted only when independent deterministic relevance checks agree. The audit uses at most two requests; invalid, incomplete, or lower-quality output is rejected, and deterministic labels remain available as a complete fallback. `--deterministic` skips the model entirely.
+In assisted mode, the only model backend is DeepSeek. It receives a locked inventory and may propose human-readable feature titles plus bounded promise mappings. It cannot add, remove, split, merge, or reclassify features, and it never returns verdict-bearing fields. Suggested mappings are accepted only when independent deterministic relevance checks agree. The audit uses at most two requests; invalid, incomplete, or lower-quality output is rejected, and deterministic labels remain available as a complete fallback. Deterministic mode, the default, skips the model entirely; `--model-assisted` opts in.
 
 ## Oracle-gated releases
 

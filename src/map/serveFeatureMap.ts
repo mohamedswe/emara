@@ -38,19 +38,19 @@ export function discoverPresetTargets(): PresetTarget[] {
     {
       id: "uptime-kuma",
       label: "louislam/uptime-kuma",
-      subtitle: "85k★ · Self-hosted monitoring tool (Node + Express + Vue)",
+      subtitle: "Local checkout · Self-hosted monitoring tool (Node + Express + Vue)",
       path: resolve(famousRoot, "uptime-kuma"),
     },
     {
       id: "full-stack-fastapi-template",
       label: "fastapi/full-stack-fastapi-template",
-      subtitle: "40k★ · Canonical FastAPI + React + SQLModel stack",
+      subtitle: "Local checkout · FastAPI + React + SQLModel stack",
       path: resolve(famousRoot, "full-stack-fastapi-template"),
     },
     {
       id: "bulletproof-react",
       label: "alan2207/bulletproof-react",
-      subtitle: "35k★ · Scalable React / Next.js feature architecture",
+      subtitle: "Local checkout · React / Next.js feature architecture",
       path: resolve(famousRoot, "bulletproof-react"),
     },
   ];
