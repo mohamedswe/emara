@@ -3,6 +3,7 @@ import Python from "tree-sitter-python";
 
 import type { DeadCodeCandidate } from "../audit/types.js";
 import type { RepositoryGraph, SymbolNode } from "../graph/types.js";
+import { sanitizeForTreeSitter } from "../parser/sanitizeForTreeSitter.ts";
 import { getSource } from "../retrieval/getSource.ts";
 
 const MAX_SOURCE_BYTES = 16 * 1024 * 1024;
@@ -190,10 +191,6 @@ function parsePython(source: string): Parser.SyntaxNode {
   parser.setLanguage(Python);
   const tree = parser.parse((index) => source.slice(index, index + PARSER_INPUT_CHUNK_SIZE));
   return tree.rootNode;
-}
-
-function sanitizeForTreeSitter(source: string): string {
-  return source.replace(/[^\u0000-\uFFFF]/gu, " ");
 }
 
 function groupByFile(symbols: readonly SymbolNode[]): Map<string, SymbolNode[]> {

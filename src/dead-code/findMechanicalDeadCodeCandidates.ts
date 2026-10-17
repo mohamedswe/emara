@@ -8,6 +8,7 @@ import {
   isSupportedSourceFile,
   parseWithLanguageFrontend,
 } from "../languages/languageFrontends.ts";
+import { sanitizeForTreeSitter } from "../parser/sanitizeForTreeSitter.ts";
 import type { ParsedSourceFile } from "../parser/types.js";
 import { getSource } from "../retrieval/getSource.ts";
 import { isTestFilePath } from "../scanner/classifyFilePath.ts";
@@ -477,16 +478,6 @@ function isFrameworkLifecycleExport(
         convention.pathPattern.test(normalizedPath);
     },
   );
-}
-
-/**
- * tree-sitter's JS binding throws EINVAL ("Invalid argument") on astral-plane
- * characters (emoji flags, etc.). Replace non-BMP characters with spaces — a
- * 1:1 character replacement that keeps line/column offsets intact for usage
- * facts, and identifiers are ASCII anyway.
- */
-function sanitizeForTreeSitter(source: string): string {
-  return source.replace(/[^\u0000-\uFFFF]/gu, " ");
 }
 
 const PARSER_INPUT_CHUNK_SIZE = 16_384;
