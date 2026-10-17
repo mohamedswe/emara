@@ -88,7 +88,7 @@ Final skips: the POSIX process-group test, two symlink tests (symlink creation n
 | Dead-import validation when other files are unparsed; validation commands that leave new parse errors. | Low | Fail closed if the mutated graph has unparsed files not present in the baseline. |
 | Node 24 not run locally; the 22.6.0 minimum is not exercised anywhere. | Low | Covered by CI for 24.x; add 22.6.0 to the CI matrix if the minimum matters. |
 | N8 stale SAFE-DELETE-PLAN.md with a local path. | Low | Remove the path or the file (owner decision). |
-| Housekeeping: `stash@{0}` (WIP backup) is still present; scratch worktrees exist under the session temp dir; a visualizer server (PID 45156, started 19:26, not by this pass) is still running from this checkout. | — | `git stash drop` once satisfied; `git worktree prune` after the temp dir is removed. |
+| Housekeeping: `stash@{0}` (WIP backup) is still present; a visualizer server (PID 45156, started 19:26, not by this pass) is still running from this checkout. Scratch worktrees used for verification were removed. | — | `git stash drop` once satisfied. |
 
 ## Reproduce the verification
 
