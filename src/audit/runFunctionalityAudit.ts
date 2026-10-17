@@ -8,6 +8,7 @@ import { DeepSeekChatModel } from "../contract/deepSeekChatModel.ts";
 import {
   type DeadCodeValidationCommand,
   IneligibleCandidateError,
+  prepareDeadCodeValidationBaseline,
   validateDeadCodeCandidate,
 } from "../dead-code/validateDeadCodeCandidate.ts";
 import { indexRepository } from "../graph/indexRepository.ts";
@@ -133,6 +134,7 @@ export async function runFunctionalityAuditCli(
     const candidatesById = new Map<string, DeadCodeCandidate>(
       audit.deadCodeCandidates.map((candidate) => [candidate.id, candidate]),
     );
+    const baseline = prepareDeadCodeValidationBaseline(graph);
     for (const candidate of audit.deadCodeCandidates) {
       if (
         candidate.verdict === "CANDIDATE" ||
@@ -144,6 +146,7 @@ export async function runFunctionalityAuditCli(
             options.repositoryPath,
             candidate,
             options.validationCommands,
+            baseline,
           );
           candidatesById.set(candidate.id, {
             ...candidate,

@@ -25,7 +25,10 @@ import type { DeadCodeCandidate } from "../audit/types.js";
 import { clusterRepositoryFeatures } from "../features/clusterRepositoryFeatures.ts";
 import { indexRepository } from "../graph/indexRepository.ts";
 import type { RepositoryGraph } from "../graph/types.js";
-import { buildReachabilityLedger } from "../retrieval/reachabilityLedger.ts";
+import {
+  buildReachabilityLedger,
+  type ReachabilityLedger,
+} from "../retrieval/reachabilityLedger.ts";
 
 const EXCLUDED_COPY_DIRECTORIES = new Set([
   ".git",
@@ -52,6 +55,28 @@ export class IneligibleCandidateError extends Error {
     super(message);
     this.name = "IneligibleCandidateError";
   }
+}
+
+/**
+ * Per-run facts about the unmutated graph. Computing them is a full feature
+ * clustering plus a reachability ledger, so prepare once and pass the same
+ * baseline to every validateDeadCodeCandidate call for that graph. The graph
+ * must not be modified after the baseline is prepared.
+ */
+export interface DeadCodeValidationBaseline {
+  readonly graph: RepositoryGraph;
+  readonly fingerprint: string;
+  readonly ledger: ReachabilityLedger;
+}
+
+export function prepareDeadCodeValidationBaseline(
+  graph: RepositoryGraph,
+): DeadCodeValidationBaseline {
+  return Object.freeze({
+    graph,
+    fingerprint: featureFingerprint(graph),
+    ledger: buildReachabilityLedger(graph),
+  });
 }
 
 export interface DeadCodeValidationCommand {
@@ -83,7 +108,11 @@ export async function validateDeadCodeCandidate(
   repositoryPath: string,
   candidate: DeadCodeCandidate,
   commands: readonly DeadCodeValidationCommand[],
+  baseline?: DeadCodeValidationBaseline,
 ): Promise<DeadCodeValidationResult> {
+  if (baseline !== undefined && baseline.graph !== graph) {
+    throw new Error("Validation baseline was prepared for a different graph");
+  }
   if (commands.length === 0) {
     throw new Error("At least one validation command is required");
   }
@@ -96,7 +125,8 @@ export async function validateDeadCodeCandidate(
     join(tmpdir(), "auditor-delete-validation-"),
   );
   const isolatedRepository = join(temporaryRoot, "repository");
-  const baselineFingerprint = featureFingerprint(graph);
+  const { fingerprint: baselineFingerprint, ledger } =
+    baseline ?? prepareDeadCodeValidationBaseline(graph);
   try {
     await cp(repositoryRoot, isolatedRepository, {
       recursive: true,
@@ -112,7 +142,7 @@ export async function validateDeadCodeCandidate(
         candidate.symbol,
       );
     } else {
-      assertWholeFileDeletionAllowed(graph, graphFile.id);
+      assertWholeFileDeletionAllowed(graph, graphFile.id, ledger);
       await rm(resolveInside(isolatedRepository, candidate.file));
     }
 
@@ -159,8 +189,8 @@ export async function validateDeadCodeCandidate(
 function assertWholeFileDeletionAllowed(
   graph: RepositoryGraph,
   fileId: string,
+  ledger: ReachabilityLedger,
 ): void {
-  const ledger = buildReachabilityLedger(graph);
   const fileStatus = ledger.entries.find((entry) => entry.nodeId === fileId)?.status;
   if (fileStatus !== "disconnected_candidate") {
     throw new IneligibleCandidateError(

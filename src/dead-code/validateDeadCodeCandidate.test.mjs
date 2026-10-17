@@ -7,7 +7,11 @@ import { test } from "node:test";
 import { indexRepository } from "../graph/indexRepository.ts";
 import { findDeadCodeCandidates } from "./findDeadCodeCandidates.ts";
 import { findUnusedImportCandidates } from "./findUnusedImportCandidates.ts";
-import { IneligibleCandidateError, validateDeadCodeCandidate } from "./validateDeadCodeCandidate.ts";
+import {
+  IneligibleCandidateError,
+  prepareDeadCodeValidationBaseline,
+  validateDeadCodeCandidate,
+} from "./validateDeadCodeCandidate.ts";
 
 test("promotes a disconnected file only after isolated commands and feature fingerprint pass", async (context) => {
   const repositoryPath = await fixtureRepository(context);
@@ -185,6 +189,39 @@ test("an in-repository relative symlink cannot write through to the original rep
 
   assert.equal(result.commandResults[0]?.exitCode, 0);
   assert.equal(await readFile(join(repositoryPath, "src", "value.txt"), "utf8"), "original\n");
+});
+
+test("a prepared baseline is reused instead of re-deriving the fingerprint and ledger per candidate", async (context) => {
+  const repositoryPath = await fixtureRepository(context);
+  await writeFixture(repositoryPath, "other.js", "export function otherDormant() {}");
+  const { graph } = await indexRepository(repositoryPath);
+  const candidates = findDeadCodeCandidates(graph).filter((value) => ["dead.js", "other.js"].includes(value.file));
+  assert.equal(candidates.length, 2);
+  const baseline = prepareDeadCodeValidationBaseline(graph);
+  let versionReads = 0;
+  Object.defineProperty(graph, "version", { configurable: true, get() { versionReads += 1; return 4; } });
+
+  for (const candidate of candidates) {
+    const other = candidate.file === "dead.js" ? "other.js" : "dead.js";
+    const result = await validateDeadCodeCandidate(graph, repositoryPath, candidate, [{
+      command: process.execPath,
+      // Each candidate must get a fresh copy: no marker from a previous run,
+      // and the other candidate's file still present.
+      args: ["-e", `const fs=require('fs');if(fs.existsSync('mutation.txt')||!fs.existsSync(${JSON.stringify(other)}))process.exit(1);fs.writeFileSync('mutation.txt','x')`],
+    }], baseline);
+    assert.equal(result.candidate.validation?.passed, true, candidate.file);
+  }
+  assert.equal(versionReads, 0, "baseline graph must not be re-analyzed per candidate");
+
+  const tampered = { ...baseline, fingerprint: "not-the-real-fingerprint" };
+  const result = await validateDeadCodeCandidate(graph, repositoryPath, candidates[0], [{ command: process.execPath, args: ["--version"] }], tampered);
+  assert.equal(result.candidate.validation?.featureFingerprintUnchanged, false);
+
+  const { graph: otherGraph } = await indexRepository(repositoryPath);
+  await assert.rejects(
+    validateDeadCodeCandidate(otherGraph, repositoryPath, candidates[0], [{ command: process.execPath, args: ["--version"] }], baseline),
+    /baseline was prepared for a different graph/u,
+  );
 });
 
 function killQuietly(pid) {
