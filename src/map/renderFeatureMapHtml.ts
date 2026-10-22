@@ -104,57 +104,49 @@ export function renderFeatureMapAppShellHtml(
   <title>${escapeHtml(pageTitle)}</title>
   <style>
     :root {
-      /* Obsidian & Champagne Gold Design System */
-      --bg-canvas: #050505;
-      --bg-surface: #0a0a0b;
-      --bg-elevated: #111113;
-      --bg-elevated-hover: #161618;
-      --accent-gold: #d4af37;
-      --accent-champagne: #f3e5ab;
-      --accent-gold-text: #e5c158;
-      --border-gold: rgba(212, 175, 55, 0.35);
-      --border-gold-focus: rgba(212, 175, 55, 0.55);
-      --halo-gold: rgba(212, 175, 55, 0.12);
+      /* Cadastral Survey Atlas Palette (Mineral-Linen Survey Stock & Surveyor Ink) */
+      --bg-vellum: #EEF2F6;
+      --bg-rail: #E5EBF2;
+      --bg-plate: #FFFFFF;
+      --bg-plate-subtle: #F8FAFC;
+      --bg-header-cell: #DCE4EE;
+      --bg-ledger: #16181D;
+      --bg-ledger-elevated: #262932;
 
-      --bg-0: #050505;
-      --bg-1: #0a0a0b;
-      --bg-2: #111113;
-      --bg-3: #161618;
-      --surface-glass: rgba(10, 10, 11, 0.88);
-      --surface-glass-strong: rgba(10, 10, 11, 0.96);
-      --surface-card: #111113;
-      --border: rgba(255, 255, 255, 0.06);
-      --border-strong: rgba(255, 255, 255, 0.12);
-      --border-glow: rgba(212, 175, 55, 0.35);
+      --border-hairline: #CBD5E1;
+      --border-strong: #94A3B8;
+      --border-row: #E2E8F0;
+      --border-ledger: #B45309;
 
-      --text-0: #fafafa;
-      --text-1: #a1a1aa;
-      --text-2: #71717a;
-      --text-3: #52525b;
+      --ink-0: #16181D;
+      --ink-1: #2E323B;
+      --ink-2: #4B5262;
+      --ledger-ink: #F6F4EE;
+      --ledger-muted: #CBD5E1;
+      --ledger-gold: #FDE68A;
 
-      --accent: #d4af37;
-      --accent-bright: #f3e5ab;
-      --royal: #c59b27;
-      --indigo: #d4af37;
-      --accent-soft: rgba(212, 175, 55, 0.12);
+      /* Survey Parcel Fills & Semantic Inks (WCAG AA >= 4.5:1 verified) */
+      --parcel-blue-bg: #EFF6FF;
+      --parcel-blue-border: #1D4ED8;
+      --parcel-blue-rule: #93C5FD;
+      --parcel-blue-ink: #1E3A8A;
 
-      --green: #10b981;
-      --green-bright: #34d399;
-      --green-soft: rgba(16, 185, 129, 0.14);
-      --amber: #d4af37;
-      --amber-soft: rgba(212, 175, 55, 0.14);
-      --purple: #e5c158;
-      --purple-soft: rgba(229, 193, 88, 0.12);
-      --red: #f43f5e;
-      --red-soft: rgba(244, 63, 94, 0.15);
-      --cyan: #f3e5ab;
-      --cyan-soft: rgba(243, 229, 171, 0.12);
+      --easement-ochre-bg: #FFFBEB;
+      --easement-ochre-border: #B45309;
+      --easement-ochre-rule: #FCD34D;
+      --easement-ochre-ink: #78350F;
 
-      --mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-      --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --display: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-      --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+      --review-crimson-bg: #FEF2F2;
+      --review-crimson-border: #DC2626;
+      --review-crimson-rule: #FCA5A5;
+      --review-crimson-ink: #991B1B;
+
+      --verified-green-bg: #ECFDF5;
+      --verified-green-border: #047857;
+      --verified-green-ink: #065F46;
+
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
     }
 
     * { box-sizing: border-box; }
@@ -162,10 +154,10 @@ export function renderFeatureMapAppShellHtml(
       margin: 0;
       padding: 0;
       height: 100%;
-      background: var(--bg-canvas);
-      color: var(--text-0);
+      background: var(--bg-vellum);
+      color: var(--ink-0);
       font-family: var(--sans);
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.5;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
@@ -173,174 +165,165 @@ export function renderFeatureMapAppShellHtml(
     }
 
     ::selection {
-      background: rgba(212, 175, 55, 0.22);
-      color: #fafafa;
+      background: #DBEAFE;
+      color: var(--ink-0);
     }
 
     .hidden { display: none !important; }
 
-    @keyframes cardEntrance {
-      from { opacity: 0; transform: translate3d(0, 10px, 0); }
-      to { opacity: 1; transform: translate3d(0, 0, 0); }
-    }
-    @keyframes edgeFlow {
-      from { stroke-dashoffset: 28; }
-      to { stroke-dashoffset: 0; }
-    }
-
     /* ==========================================================================
-       1. AMBIENT BACKGROUND & CONTAINER
+       1. REPOSITORY SURVEY LAUNCHPAD (LANDING SCREEN)
        ========================================================================== */
     .landing-screen {
-      position: relative;
       min-height: 100vh;
       width: 100vw;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 20px;
+      background-color: var(--bg-vellum);
       overflow-x: hidden;
       overflow-y: auto;
-      background-color: var(--bg-canvas);
-      background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.07), transparent);
-      background-repeat: no-repeat;
-      isolation: isolate;
     }
 
-    .ambient-graph-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.32;
-      filter: blur(0.4px);
-    }
-
-    /* Main Card Surface */
-    .landing-card {
-      position: relative;
-      z-index: 2;
-      width: 100%;
-      max-width: 960px;
-      background: var(--bg-surface);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 20px;
-      padding: 32px 36px 28px;
-      box-shadow:
-        0 32px 80px -12px rgba(0, 0, 0, 0.85),
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-      animation: cardEntrance 0.65s var(--ease-out-expo) both;
-      overflow: visible;
-      margin: auto;
-    }
-
-    /* ==========================================================================
-       2. RESTRAINED BRAND BADGE & TYPOGRAPHY
-       ========================================================================== */
-    .kicker-row {
+    .landing-ledger-bar {
+      background: var(--bg-ledger);
+      color: var(--ledger-ink);
+      border-bottom: 2px solid var(--border-ledger);
+      padding: 14px 28px;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .landing-ledger-brand {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ledger-ink);
+    }
+
+    .landing-ledger-stamp {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--bg-ledger-elevated);
+      color: var(--ledger-gold);
+      padding: 4px 10px;
+      border: 1px solid #3F4452;
+    }
+
+    .landing-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+    }
+
+    .landing-card {
+      width: 100%;
+      max-width: 960px;
+      background: var(--bg-plate);
+      border: 1px solid var(--border-strong);
+      padding: 32px 36px;
+    }
+
+    .landing-header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid var(--ink-0);
+      padding-bottom: 12px;
       margin-bottom: 14px;
     }
 
-    .landing-kicker {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      padding: 5px 12px 5px 10px;
-      border-radius: 999px;
-      background: #121214;
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      color: #e5c158;
-      font-family: var(--mono);
-      font-weight: 600;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-      transition: border-color 0.18s ease, transform 0.18s var(--ease-spring);
-    }
-    .landing-kicker:hover {
-      border-color: rgba(212, 175, 55, 0.45);
-      transform: translateY(-1px);
-    }
-
-    .status-dot-core {
-      position: relative;
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #d4af37;
-      flex-shrink: 0;
-    }
-
     .landing-title {
-      margin: 0 0 8px;
-      font-family: var(--sans);
-      font-size: 26px;
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--ink-0);
+    }
+
+    .landing-folio-tag {
+      font-family: var(--mono);
+      font-size: 12px;
       font-weight: 600;
-      line-height: 1.25;
-      letter-spacing: -0.03em;
-      color: #fafafa;
+      color: var(--easement-ochre-ink);
+      background: var(--easement-ochre-bg);
+      border: 1px solid var(--easement-ochre-rule);
+      padding: 3px 9px;
     }
 
     .landing-sub {
-      margin: 0 0 20px;
-      color: #a1a1aa;
-      font-size: 13.5px;
+      margin: 0 0 22px;
+      color: var(--ink-1);
+      font-size: 14px;
       line-height: 1.6;
-      font-weight: 400;
+      max-width: 68ch;
     }
     .landing-sub code {
       font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 500;
-      color: #e5c158;
-      background: rgba(212, 175, 55, 0.08);
-      border: 1px solid rgba(212, 175, 55, 0.18);
-      padding: 2px 7px;
-      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--parcel-blue-ink);
+      background: var(--parcel-blue-bg);
+      border: 1px solid var(--parcel-blue-rule);
+      padding: 1px 6px;
     }
 
-    /* ==========================================================================
-       3. REFINED INPUT BAR & "ANALYZE COMMIT" CTA
-       ========================================================================== */
     .prompt-form-shell {
-      position: relative;
+      margin-bottom: 10px;
+    }
+    .prompt-form-shell.static-mode {
+      background: var(--bg-rail);
+      border: 1px solid var(--border-strong);
+      padding: 12px 14px;
+    }
+    .prompt-mode-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
       margin-bottom: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink-1);
+    }
+    .prompt-mode-title {
+      font-weight: 700;
+      color: var(--ink-0);
+    }
+    .prompt-mode-cmd {
+      background: var(--bg-plate);
+      border: 1px solid var(--border-strong);
+      color: var(--parcel-blue-ink);
+      padding: 2px 8px;
+      font-weight: 600;
     }
 
     .prompt-form {
       display: flex;
       align-items: stretch;
       gap: 12px;
-      position: relative;
-      z-index: 2;
     }
 
     .prompt-input-container {
-      position: relative;
       flex: 1;
       display: flex;
       align-items: center;
-      border-radius: 10px;
-      background: #070708;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition:
-        border-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .prompt-input-container:hover {
-      border-color: rgba(255, 255, 255, 0.14);
+      background: var(--bg-plate-subtle);
+      border: 1px solid var(--border-strong);
     }
     .prompt-input-container:focus-within {
-      border-color: rgba(212, 175, 55, 0.55);
-      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+      border-color: var(--parcel-blue-border);
+      background: var(--bg-plate);
+      outline: 2px solid var(--parcel-blue-rule);
+      outline-offset: -1px;
     }
 
     .prompt-input {
@@ -348,176 +331,135 @@ export function renderFeatureMapAppShellHtml(
       width: 100%;
       background: transparent;
       border: 0;
-      border-radius: 10px;
       padding: 12px 16px;
-      color: #fafafa;
+      color: var(--ink-0);
+      caret-color: var(--parcel-blue-border);
       font-family: var(--mono);
       font-size: 13px;
-      font-weight: 400;
-      letter-spacing: 0.01em;
       outline: none;
-      caret-color: #d4af37;
     }
     .prompt-input::placeholder {
-      color: #52525b;
-      font-weight: 400;
+      color: var(--ink-2);
+    }
+    .prompt-input:disabled {
+      background: var(--bg-plate);
+      color: var(--ink-1);
+      cursor: default;
     }
 
     .prompt-submit {
-      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      background: linear-gradient(180deg, #e5c158 0%, #c59b27 100%);
-      color: #09090b;
-      border: 1px solid rgba(229, 193, 88, 0.55);
-      border-radius: 10px;
-      padding: 0 20px;
+      background: var(--ink-0);
+      color: var(--ledger-ink);
+      border: 1px solid var(--ink-0);
+      padding: 0 22px;
       font-family: var(--sans);
       font-weight: 600;
-      font-size: 13px;
-      letter-spacing: 0.01em;
+      font-size: 14px;
       cursor: pointer;
       white-space: nowrap;
-      box-shadow:
-        0 2px 10px rgba(212, 175, 55, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.35);
-      transition:
-        transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1),
-        filter 150ms ease;
+      transition: background-color 140ms ease;
     }
-    .prompt-submit:hover {
-      box-shadow:
-        0 4px 14px rgba(212, 175, 55, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.45);
-      filter: brightness(1.03);
-    }
-    .prompt-submit:active {
-      transform: translateY(1px);
+    .prompt-submit:hover:not(:disabled) {
+      background: var(--parcel-blue-border);
+      border-color: var(--parcel-blue-border);
     }
     .prompt-submit:disabled {
-      cursor: progress;
-      opacity: 0.85;
-      filter: grayscale(0.2);
+      background: var(--bg-header-cell);
+      color: var(--ink-1);
+      border-color: var(--border-strong);
+      cursor: default;
     }
 
-    .btn-arrow-cue {
-      display: inline-block;
-      font-size: 14px;
-      line-height: 1;
-      transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+    /* Browser Surface Craft: Archival Scrollbars & Focus Rings */
+    .sidebar-list,
+    .stage-body,
+    .code-viewer {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-strong) var(--bg-rail);
     }
-    .prompt-submit:hover .btn-arrow-cue {
-      transform: translateX(2px);
+    .sidebar-list::-webkit-scrollbar,
+    .stage-body::-webkit-scrollbar,
+    .code-viewer::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .sidebar-list::-webkit-scrollbar-track,
+    .stage-body::-webkit-scrollbar-track,
+    .code-viewer::-webkit-scrollbar-track {
+      background: var(--bg-rail);
+    }
+    .sidebar-list::-webkit-scrollbar-thumb,
+    .stage-body::-webkit-scrollbar-thumb,
+    .code-viewer::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border: 1px solid var(--bg-rail);
+    }
+    button:focus-visible,
+    input:focus-visible,
+    .flow-card.clickable:focus-visible,
+    .code-row:focus-visible {
+      outline: 2px solid var(--parcel-blue-border);
+      outline-offset: -2px;
     }
 
     .prompt-status {
       font-family: var(--mono);
-      font-size: 12px;
-      color: #e5c158;
+      font-size: 13px;
+      color: var(--parcel-blue-ink);
       margin: 8px 0 4px;
       min-height: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
     .prompt-status.error {
-      color: #f87171;
+      color: var(--review-crimson-ink);
     }
 
-    /* ==========================================================================
-       4. CLEAN DIVISIONALS & REPOSITORY CARDS
-       ========================================================================== */
     .presets-section {
-      margin-top: 18px;
-      position: relative;
-    }
-
-    .section-divider {
-      width: 100%;
-      height: 1px;
-      background: rgba(255, 255, 255, 0.06);
-      margin: 18px 0 16px;
+      margin-top: 22px;
+      border-top: 1px solid var(--border-hairline);
+      padding-top: 20px;
     }
 
     .presets-header-row {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      margin-bottom: 12px;
+      justify-content: space-between;
+      margin-bottom: 14px;
     }
 
     .presets-label {
-      font-family: var(--sans);
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #71717a;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink-0);
       margin: 0;
     }
 
     .preset-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-    @media (max-width: 860px) {
-      .preset-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      }
-    }
-    @media (max-width: 600px) {
-      .preset-grid {
-        grid-template-columns: 1fr;
-      }
+      gap: 14px;
     }
 
     .preset-btn {
-      --mouse-x: 50%;
-      --mouse-y: 50%;
-      position: relative;
       text-align: left;
-      background: #111113;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      padding: 16px 16px 14px;
-      color: var(--text-0);
+      background: var(--bg-plate-subtle);
+      border: 1px solid var(--border-strong);
+      padding: 16px;
+      color: var(--ink-0);
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      gap: 8px;
-      min-height: 128px;
-      overflow: hidden;
-      transition:
-        transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
-        border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
-        background 180ms cubic-bezier(0.16, 1, 0.3, 1),
-        box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .preset-btn::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(300px circle at var(--mouse-x) var(--mouse-y), rgba(212, 175, 55, 0.06), transparent 40%);
-      opacity: 0;
-      transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
-      pointer-events: none;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 132px;
+      transition: background-color 140ms ease, border-color 140ms ease;
     }
     .preset-btn:hover {
-      transform: translateY(-2px);
-      background: #161618;
-      border-color: rgba(212, 175, 55, 0.35);
-      box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
-    }
-    .preset-btn:hover::before {
-      opacity: 1;
-    }
-    .preset-btn:active {
-      transform: translateY(0);
+      background: var(--parcel-blue-bg);
+      border-color: var(--parcel-blue-border);
     }
 
     .preset-top-row {
@@ -526,8 +468,6 @@ export function renderFeatureMapAppShellHtml(
       justify-content: space-between;
       gap: 8px;
       width: 100%;
-      position: relative;
-      z-index: 1;
     }
     .preset-identity {
       display: flex;
@@ -538,72 +478,57 @@ export function renderFeatureMapAppShellHtml(
     }
     .preset-owner {
       font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 400;
-      color: #71717a;
+      font-size: 12px;
+      color: var(--ink-2);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .preset-repo-name {
       font-family: var(--mono);
-      font-weight: 600;
-      font-size: 13px;
-      color: #f4f4f5;
-      letter-spacing: -0.01em;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--ink-0);
       line-height: 1.35;
       word-break: break-word;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      min-height: 35px;
     }
     .preset-star-count {
       font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 500;
-      color: #a1a1aa;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--easement-ochre-ink);
+      background: var(--easement-ochre-bg);
+      border: 1px solid var(--easement-ochre-rule);
+      padding: 2px 6px;
       white-space: nowrap;
-      letter-spacing: 0.02em;
       flex-shrink: 0;
-      padding-top: 1px;
     }
     .preset-desc {
-      font-size: 12px;
-      color: #71717a;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      position: relative;
-      z-index: 1;
+      font-size: 13px;
+      color: var(--ink-1);
+      line-height: 1.45;
     }
 
     /* ==========================================================================
-       MAIN VISUALIZER WORKSPACE (COHESIVE CYBER-GLASS UPGRADE)
+       2. CADASTRAL WORKBENCH SHELL (TOP LEDGER + 3-PANE ATLAS)
        ========================================================================== */
     .app {
       display: grid;
-      grid-template-rows: 56px 1fr;
+      grid-template-rows: 58px minmax(0, 1fr);
       height: 100vh;
       width: 100vw;
-      background: var(--bg-0);
+      background: var(--bg-vellum);
     }
 
-    /* Header */
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
-      background: rgba(10, 10, 11, 0.95);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
+      background: var(--bg-ledger);
+      color: var(--ledger-ink);
+      border-bottom: 2px solid var(--border-ledger);
       gap: 16px;
-      position: relative;
       z-index: 10;
     }
     .brand {
@@ -615,81 +540,78 @@ export function renderFeatureMapAppShellHtml(
     .brand-mark {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 5px 10px;
-      border-radius: 8px;
-      background: #121214;
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      color: #e5c158;
+      gap: 8px;
+      padding: 5px 11px;
+      background: var(--bg-ledger-elevated);
+      border: 1px solid #3F4452;
+      color: var(--ledger-gold);
       font-family: var(--mono);
-      font-weight: 600;
-      font-size: 11px;
+      font-weight: 700;
+      font-size: 12px;
       letter-spacing: 0.04em;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-      transition: all 0.2s var(--ease-spring);
     }
     .brand-mark:hover {
-      border-color: rgba(212, 175, 55, 0.5);
-      color: #fafafa;
-      transform: translateY(-1px);
+      border-color: var(--ledger-gold);
+      color: #FFFFFF;
     }
     .repo-title {
-      font-family: var(--display);
       font-weight: 700;
-      font-size: 14.5px;
-      color: var(--text-0);
+      font-size: 16px;
+      color: var(--ledger-ink);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .commit-pill {
       font-family: var(--mono);
-      font-size: 11px;
-      color: #e5c158;
-      background: rgba(212, 175, 55, 0.08);
-      border: 1px solid rgba(212, 175, 55, 0.18);
-      padding: 2px 8px;
-      border-radius: 6px;
+      font-size: 12px;
+      color: var(--ledger-gold);
+      background: var(--bg-ledger-elevated);
+      border: 1px solid #3F4452;
+      padding: 3px 8px;
+      font-variant-numeric: tabular-nums;
     }
 
     .lens-tabs {
       display: flex;
       gap: 4px;
-      background: #070708;
+      background: var(--bg-ledger-elevated);
       padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
+      border: 1px solid #3F4452;
     }
     .lens-tab {
       background: transparent;
       border: 1px solid transparent;
-      color: var(--text-2);
+      color: var(--ledger-muted);
       font-family: var(--sans);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
-      padding: 6px 13px;
-      border-radius: 7px;
+      padding: 5px 12px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 7px;
-      transition: all 0.2s var(--ease-spring);
     }
-    .lens-tab:hover { color: var(--text-0); }
+    .lens-tab:hover {
+      color: #FFFFFF;
+    }
     .lens-tab.active {
-      background: #161618;
-      border-color: rgba(212, 175, 55, 0.35);
-      color: var(--text-0);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      background: var(--bg-vellum);
+      color: var(--ink-0);
+      border-color: var(--border-strong);
     }
     .lens-count {
       font-family: var(--mono);
-      font-size: 10.5px;
+      font-size: 12px;
       padding: 1px 6px;
-      border-radius: 10px;
-      background: rgba(212, 175, 55, 0.12);
-      color: #e5c158;
+      background: rgba(255, 255, 255, 0.12);
+      color: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+    .lens-tab.active .lens-count {
+      background: var(--bg-header-cell);
+      color: var(--ink-0);
     }
 
     .topbar-right {
@@ -702,116 +624,131 @@ export function renderFeatureMapAppShellHtml(
       align-items: center;
       gap: 7px;
       padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #111113;
-      color: var(--text-1);
-      font-size: 12px;
+      border: 1px solid #3F4452;
+      background: var(--bg-ledger-elevated);
+      color: var(--ledger-ink);
+      font-family: var(--sans);
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       user-select: none;
-      transition: all 0.2s var(--ease-spring);
     }
     .switch-btn:hover, .sim-toggle:hover {
-      border-color: rgba(212, 175, 55, 0.35);
-      color: var(--text-0);
-      transform: translateY(-1px);
+      border-color: var(--ledger-gold);
     }
     .sim-toggle.active {
-      border-color: var(--red);
-      background: var(--red-soft);
-      color: #fda4af;
-      box-shadow: 0 0 18px rgba(244, 63, 94, 0.3);
+      border-color: #FCA5A5;
+      background: var(--review-crimson-border);
+      color: #FFFFFF;
     }
 
-    /* Workspace 3-pane layout */
+    /* 3-Pane Cadastral Workbench */
     .workspace {
       display: grid;
-      grid-template-columns: 308px 1fr 420px;
+      grid-template-columns: 296px minmax(0, 1fr) 380px;
       height: 100%;
       overflow: hidden;
     }
 
-    /* Left Sidebar */
+    /* Left Pane: Capability Parcel Schedule */
     .sidebar {
-      background: rgba(10, 10, 11, 0.95);
-      backdrop-filter: blur(14px);
-      border-right: 1px solid var(--border);
+      background: var(--bg-rail);
+      border-right: 1px solid var(--border-hairline);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
     }
-    .sidebar-search {
-      padding: 12px;
-      border-bottom: 1px solid var(--border);
+    .sidebar-head {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .sidebar-title-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .sidebar-heading {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink-0);
+      letter-spacing: -0.01em;
+    }
+    .sidebar-folio-note {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink-2);
     }
     .search-input {
       width: 100%;
-      background: #070708;
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      background: var(--bg-plate);
+      border: 1px solid var(--border-strong);
       padding: 8px 11px;
-      color: var(--text-0);
+      color: var(--ink-0);
+      caret-color: var(--parcel-blue-border);
       font-family: var(--mono);
       font-size: 12px;
       outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .search-input::placeholder {
+      color: var(--ink-2);
     }
     .search-input:focus {
-      border-color: rgba(212, 175, 55, 0.55);
-      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+      border-color: var(--parcel-blue-border);
+      outline: 2px solid var(--parcel-blue-rule);
+      outline-offset: -1px;
     }
     .sidebar-list {
       flex: 1;
       overflow-y: auto;
-      padding: 8px;
+      padding: 10px 12px 16px;
     }
     .group-header {
-      font-size: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-2);
-      padding: 12px 8px 5px;
+      color: var(--ink-1);
+      padding: 12px 4px 6px;
+      border-bottom: 1px solid var(--border-strong);
+      margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
+      font-variant-numeric: tabular-nums;
     }
     .nav-item {
       width: 100%;
       text-align: left;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 9px;
-      padding: 9px 11px;
-      margin-bottom: 4px;
-      color: var(--text-1);
+      background: var(--bg-plate-subtle);
+      border: 1px solid var(--border-hairline);
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      color: var(--ink-0);
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      transition: all 0.18s var(--ease-spring);
+      gap: 6px;
     }
     .nav-item:hover {
-      background: #161618;
-      border-color: rgba(255, 255, 255, 0.08);
-      transform: translateX(2px);
+      background: var(--bg-plate);
+      border-color: var(--border-strong);
     }
     .nav-item.active {
-      background: #161618;
-      border-color: rgba(212, 175, 55, 0.35);
-      color: var(--text-0);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      background: var(--parcel-blue-bg);
+      border-color: var(--parcel-blue-border);
+      box-shadow: inset 0 0 0 1px var(--parcel-blue-border);
     }
     .nav-item-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 8px;
     }
     .nav-item-title {
       font-weight: 600;
-      font-size: 12.5px;
-      color: var(--text-0);
+      font-size: 13px;
+      color: var(--ink-0);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -819,95 +756,145 @@ export function renderFeatureMapAppShellHtml(
     .nav-item-meta {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
-      font-size: 11px;
-      color: var(--text-2);
+      font-size: 12px;
+      color: var(--ink-2);
       font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Badges */
+    /* Survey Stamps / Badges (all >= 12px and WCAG AA contrast) */
     .badge {
       display: inline-flex;
       align-items: center;
-      padding: 1.5px 6.5px;
-      border-radius: 5px;
-      font-size: 10px;
+      padding: 1px 6px;
+      font-size: 12px;
       font-weight: 600;
       font-family: var(--mono);
-      letter-spacing: 0.03em;
       white-space: nowrap;
       border: 1px solid transparent;
     }
-    .badge-http { background: rgba(212, 175, 55, 0.1); color: #e5c158; border-color: rgba(212, 175, 55, 0.22); }
-    .badge-cli { background: var(--purple-soft); color: #e5c158; border-color: rgba(212, 175, 55, 0.22); }
-    .badge-ui { background: rgba(243, 229, 171, 0.1); color: #f3e5ab; border-color: rgba(243, 229, 171, 0.22); }
-    .badge-ok { background: var(--green-soft); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.28); }
-    .badge-warn { background: var(--amber-soft); color: #fcd34d; border-color: rgba(245, 158, 11, 0.28); }
-    .badge-danger { background: var(--red-soft); color: #fda4af; border-color: rgba(244, 63, 94, 0.3); }
-    .badge-neutral { background: rgba(255, 255, 255, 0.04); color: var(--text-1); border-color: var(--border); }
+    .badge-http {
+      background: var(--parcel-blue-bg);
+      color: var(--parcel-blue-ink);
+      border-color: var(--parcel-blue-rule);
+    }
+    .badge-cli {
+      background: var(--easement-ochre-bg);
+      color: var(--easement-ochre-ink);
+      border-color: var(--easement-ochre-rule);
+    }
+    .badge-ui {
+      background: var(--bg-header-cell);
+      color: var(--ink-0);
+      border-color: var(--border-strong);
+    }
+    .badge-ok {
+      background: var(--verified-green-bg);
+      color: var(--verified-green-ink);
+      border-color: var(--verified-green-border);
+    }
+    .badge-warn {
+      background: var(--easement-ochre-bg);
+      color: var(--easement-ochre-ink);
+      border-color: var(--easement-ochre-rule);
+    }
+    .badge-danger {
+      background: var(--review-crimson-bg);
+      color: var(--review-crimson-ink);
+      border-color: var(--review-crimson-rule);
+    }
+    .badge-neutral {
+      background: var(--bg-rail);
+      color: var(--ink-1);
+      border-color: var(--border-strong);
+    }
 
-    /* Center Stage */
+    /* Center Stage: Cadastral Parcel Flow */
     .stage {
       display: flex;
       flex-direction: column;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.04) 0%, transparent 60%),
-        #050505;
+      background: var(--bg-vellum);
       overflow: hidden;
       position: relative;
+      min-width: 0;
     }
     .stage-header {
       padding: 16px 24px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(10, 10, 11, 0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-strong);
+      background: var(--bg-plate);
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
-      position: relative;
       z-index: 3;
     }
-    .stage-kicker {
-      font-family: var(--mono);
-      font-size: 10.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #d4af37;
-      margin-bottom: 3px;
+    .stage-title-group {
+      min-width: 0;
+      flex: 1;
     }
     .stage-title {
       margin: 0;
-      font-family: var(--display);
-      font-size: 19px;
+      font-size: 24px;
       font-weight: 700;
-      color: var(--text-0);
+      color: var(--ink-0);
       letter-spacing: -0.02em;
+      line-height: 1.25;
     }
     .stage-subtitle {
       margin: 4px 0 0;
-      color: var(--text-2);
+      color: var(--ink-2);
       font-family: var(--mono);
-      font-size: 11.5px;
+      font-size: 12px;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
+    .stage-legend-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--ink-1);
+      flex-wrap: wrap;
+    }
+    .legend-swatch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swatch-box {
+      width: 12px;
+      height: 12px;
+      border: 1px solid var(--ink-0);
+      display: inline-block;
+    }
+    .swatch-exclusive {
+      background: var(--parcel-blue-bg);
+      border-color: var(--parcel-blue-border);
+    }
+    .swatch-shared {
+      background: var(--easement-ochre-bg);
+      border-color: var(--easement-ochre-border);
+    }
+
     .stage-body {
       flex: 1;
       overflow: auto;
-      padding: 26px;
+      padding: 20px 24px 28px;
       position: relative;
+      background-color: var(--bg-vellum);
     }
 
-    /* 3-Column Flow Diagram */
+    /* 3-Column Cadastral Survey Board */
     .flow-board {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) minmax(310px, 1.35fr) minmax(240px, 1fr);
-      gap: 56px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr) minmax(0, 1fr);
+      gap: 28px;
       align-items: start;
-      max-width: 1240px;
-      margin: 0 auto;
+      width: 100%;
       min-height: 420px;
     }
     .flow-svg-layer {
@@ -918,170 +905,199 @@ export function renderFeatureMapAppShellHtml(
       pointer-events: none;
       z-index: 1;
     }
-    .flow-edge-anim {
-      stroke-dasharray: 6 8;
-      animation: edgeFlow 1.2s linear infinite;
-    }
     .flow-col {
       position: relative;
       z-index: 2;
+      background: var(--bg-plate);
+      border: 1px solid var(--border-strong);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      min-width: 0;
     }
     .col-header {
-      font-family: var(--mono);
-      font-size: 10.5px;
+      background: var(--bg-header-cell);
+      font-family: var(--sans);
+      font-size: 13px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-2);
-      padding-bottom: 7px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 4px;
+      color: var(--ink-0);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-strong);
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .col-count {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink-1);
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Flow Cards */
+    /* Cadastral Parcel Lots (Rows inside each column sheet) */
     .flow-card {
-      background: #0d0d0f;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px 15px;
-      box-shadow: 0 8px 22px -6px rgba(0, 0, 0, 0.45);
-      transition:
-        transform 0.2s var(--ease-spring),
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        opacity 0.15s ease;
+      background: var(--bg-plate);
+      border-bottom: 1px solid var(--border-row);
+      padding: 12px 14px;
+      transition: opacity 150ms ease, background-color 150ms ease;
+      min-width: 0;
     }
-    .flow-card.clickable { cursor: pointer; }
+    .flow-card:last-child {
+      border-bottom: 0;
+    }
+    .flow-card.clickable {
+      cursor: pointer;
+    }
     .flow-card.clickable:hover {
-      border-color: rgba(212, 175, 55, 0.45);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 0 14px rgba(212, 175, 55, 0.12);
+      background: var(--bg-plate-subtle);
     }
     .flow-card.primary-card {
-      background: #141416;
-      border-color: rgba(212, 175, 55, 0.45);
-      box-shadow:
-        0 14px 36px -6px rgba(0, 0, 0, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      background: var(--bg-plate);
+      padding: 0;
     }
     .flow-card.shared-card {
-      border-left: 3px solid #d4af37;
+      background: var(--easement-ochre-bg);
+    }
+    .flow-card.shared-card:hover {
+      background: #FEF3C7;
     }
     .flow-card.infra-card {
-      border-left: 3px solid #f3e5ab;
+      background: var(--bg-plate-subtle);
     }
     .flow-card.sim-removed {
-      border-color: var(--red) !important;
-      background: rgba(244, 63, 94, 0.1) !important;
+      background: var(--review-crimson-bg) !important;
+      outline: 2px solid var(--review-crimson-border);
+      outline-offset: -2px;
     }
     .flow-card.sim-degraded {
-      border-color: var(--amber) !important;
-      background: rgba(245, 158, 11, 0.1) !important;
+      background: var(--easement-ochre-bg) !important;
+      outline: 2px solid var(--easement-ochre-border);
+      outline-offset: -2px;
+    }
+    .flow-board.is-tracing .flow-card.dimmed {
+      opacity: 0.42;
+    }
+
+    .parcel-summary-head {
+      padding: 12px 14px;
+      background: var(--parcel-blue-bg);
+      border-bottom: 1px solid var(--parcel-blue-rule);
     }
 
     .card-title-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      margin-bottom: 4px;
     }
     .card-title {
-      font-weight: 600;
+      font-weight: 700;
       font-size: 13px;
-      color: var(--text-0);
-      word-break: break-word;
+      line-height: 1.35;
+      color: var(--ink-0);
+      overflow-wrap: break-word;
+      word-break: normal;
+      min-width: 140px;
+      flex: 1 1 140px;
     }
     .card-loc {
       font-family: var(--mono);
-      font-size: 11px;
-      color: #e5c158;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--parcel-blue-ink);
+      overflow-wrap: break-word;
+      word-break: normal;
       cursor: pointer;
     }
-    .card-loc:hover { text-decoration: underline; color: #f3e5ab; }
+    .card-loc:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
 
     .section-label {
       font-family: var(--mono);
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--text-2);
-      margin: 13px 0 6px;
+      color: var(--ink-1);
+      background: var(--bg-rail);
+      padding: 7px 14px;
+      border-top: 1px solid var(--border-row);
+      border-bottom: 1px solid var(--border-row);
     }
     .chip-list {
       display: flex;
       flex-direction: column;
-      gap: 5px;
     }
     .code-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 6px 9px;
-      border-radius: 7px;
-      background: #111113;
-      border: 1px solid var(--border);
+      padding: 8px 14px;
+      background: var(--bg-plate);
+      border-bottom: 1px solid var(--border-row);
       font-family: var(--mono);
-      font-size: 11.5px;
-      color: var(--text-1);
+      font-size: 12px;
+      color: var(--ink-0);
       cursor: pointer;
-      transition: all 0.16s ease;
+      min-width: 0;
+    }
+    .code-row:last-child {
+      border-bottom: 0;
     }
     .code-row:hover {
-      border-color: rgba(212, 175, 55, 0.35);
-      color: var(--text-0);
-      background: #161618;
-      transform: translateX(2px);
+      background: var(--parcel-blue-bg);
+    }
+    .code-row.owned-deed {
+      background: #F5F9FF;
+    }
+    .code-row.owned-deed:hover {
+      background: var(--parcel-blue-bg);
+    }
+    .code-row-path {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      flex: 1;
     }
     .code-row.borrowed {
-      background: transparent;
-      border-style: dashed;
-      color: var(--text-2);
+      background: var(--easement-ochre-bg);
+      color: var(--easement-ochre-ink);
     }
     .code-row.freed-highlight {
-      border-color: var(--red);
-      background: var(--red-soft);
-      color: #fda4af;
+      background: var(--review-crimson-bg);
+      color: var(--review-crimson-ink);
+      font-weight: 600;
     }
 
     .sim-banner {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       padding: 12px 16px;
-      border-radius: 10px;
-      background: var(--red-soft);
-      border: 1px solid rgba(244, 63, 94, 0.45);
+      background: var(--review-crimson-bg);
+      border: 1px solid var(--review-crimson-border);
+      color: var(--review-crimson-ink);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      backdrop-filter: blur(8px);
     }
 
-    /* Right Source Inspector Drawer */
+    /* Right Pane: Deed & Source Inspector */
     .inspector {
-      background: rgba(10, 10, 11, 0.95);
-      backdrop-filter: blur(14px);
-      border-left: 1px solid var(--border);
+      background: var(--bg-plate);
+      border-left: 1px solid var(--border-hairline);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      min-width: 0;
     }
     .inspector-header {
-      padding: 12px 15px;
-      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
+      background: var(--bg-rail);
+      border-bottom: 1px solid var(--border-hairline);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1089,62 +1105,133 @@ export function renderFeatureMapAppShellHtml(
     }
     .inspector-file {
       font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-0);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-0);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .inspector-sub {
       font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-2);
+      font-size: 12px;
+      color: var(--ink-2);
+      margin-top: 2px;
     }
     .code-viewer {
       flex: 1;
-      overflow: auto;
-      padding: 10px 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px 0;
       font-family: var(--mono);
-      font-size: 11.5px;
-      line-height: 1.55;
-      background: var(--bg-canvas);
+      font-size: 12.5px;
+      line-height: 1.6;
+      background: var(--bg-plate);
     }
     .code-line {
       display: grid;
-      grid-template-columns: 46px 1fr;
-      padding: 0 12px;
-      white-space: pre;
+      grid-template-columns: 44px minmax(0, 1fr);
+      padding: 1px 14px;
     }
     .code-line.highlight {
-      background: rgba(212, 175, 55, 0.12);
-      border-left: 3px solid #d4af37;
-      padding-left: 9px;
+      background: #DBEAFE;
+      font-weight: 600;
     }
     .line-num {
-      color: var(--text-2);
+      color: var(--ink-2);
       user-select: none;
       text-align: right;
       padding-right: 12px;
+      font-variant-numeric: tabular-nums;
     }
     .line-text {
-      color: var(--text-1);
+      color: var(--ink-0);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
     }
     .empty-note {
-      color: var(--text-2);
-      font-size: 12px;
+      color: var(--ink-2);
+      font-size: 13px;
       padding: 16px;
       text-align: center;
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      background: rgba(17, 17, 19, 0.45);
+      background: var(--bg-plate-subtle);
     }
 
-    @media (max-width: 720px) {
-      .landing-card { padding: 26px 22px 24px; }
-      .landing-title { font-size: 24px; }
-      .prompt-form { flex-direction: column; }
-      .prompt-submit { height: 46px; }
+    /* Responsive Adaptation (Tablet & 390px Mobile) */
+    @media (max-width: 1120px) {
+      html, body {
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .app {
+        height: auto;
+        min-height: 100vh;
+        grid-template-rows: auto 1fr;
+      }
+      .topbar {
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        gap: 10px;
+      }
+      .workspace {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--border-strong);
+        max-height: 320px;
+      }
+      .stage-header {
+        flex-direction: column;
+        padding: 14px 16px;
+      }
+      .stage-body {
+        padding: 16px;
+        overflow: visible;
+      }
+      .flow-board {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        min-height: 0;
+      }
+      .flow-svg-layer {
+        display: none;
+      }
+      .inspector {
+        border-left: 0;
+        border-top: 1px solid var(--border-strong);
+        max-height: 420px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
+      .landing-card {
+        padding: 22px 18px;
+      }
+      .landing-title {
+        font-size: 22px;
+      }
+      .prompt-form {
+        flex-direction: column;
+      }
+      .prompt-submit {
+        height: 44px;
+      }
+      .lens-tabs {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .topbar-right {
+        width: 100%;
+        justify-content: flex-start;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1159,58 +1246,60 @@ export function renderFeatureMapAppShellHtml(
 <body>
   <!-- Landing Screen: Paste Commit SHA / Repo to Analyze -->
   <section class="landing-screen" id="landing-screen">
-    <!-- Ambient Canvas (Whisper-quiet champagne gold AST drift) -->
-    <canvas class="ambient-graph-canvas" id="ambient-graph-canvas" aria-hidden="true"></canvas>
+    <header class="landing-ledger-bar">
+      <div class="landing-ledger-brand">Emara · Cadastral Codebase Atlas</div>
+      <div class="landing-ledger-stamp">LOCAL DETERMINISTIC AST AUDITOR · SHA-256 VERIFIED</div>
+    </header>
 
-    <div class="landing-card" id="landing-card">
-      <!-- 2. Brand Badge -->
-      <div class="kicker-row">
-        <div class="landing-kicker">
-          <span class="status-dot-core" aria-hidden="true"></span>
-          <span>EMARA · ARCHITECTURE VISUALIZER</span>
+    <div class="landing-main">
+      <div class="landing-card" id="landing-card">
+        <div class="landing-header-row">
+          <h1 class="landing-title">${staticDemo ? "Static snapshot demo" : "Survey any commit into functional parcels"}</h1>
+          <span class="landing-folio-tag">FOLIO SERIES · JS/TS &amp; PYTHON</span>
         </div>
-      </div>
 
-      <h1 class="landing-title">${staticDemo ? "Static snapshot demo" : "Visualize any commit into features"}</h1>
-      <p class="landing-sub">
-        ${staticDemo
-          ? "Choose a pinned repository snapshot below. Nothing is uploaded or analyzed from this page; run Emara locally to analyze your own code. Static findings require human review."
-          : "Paste a commit hash or <code>owner/repo@commit</code>. Emara indexes the AST, slices external entrypoints into capabilities, isolates shared subsystems, and maps line-level source evidence."}
-      </p>
+        <p class="landing-sub">
+          ${staticDemo
+            ? "Choose a pinned repository snapshot below. Nothing is uploaded or analyzed from this page; run Emara locally to analyze your own code. Static findings require human review."
+            : "Paste a commit hash or <code>owner/repo@commit</code>. Emara indexes the AST, maps external entrypoints to exclusive capability parcels, isolates shared easements, and links SHA-256-verified source deeds."}
+        </p>
 
-      <!-- 3. Refined Input Bar & "Analyze Commit" CTA -->
-      <div class="prompt-form-shell" id="prompt-form-shell">
-        <form class="prompt-form" id="analyze-form">
-          <div class="prompt-input-container">
-            <input
-              class="prompt-input"
-              id="analyze-input"
-              ${staticDemo ? "disabled" : ""}
-              type="text"
-              placeholder="Paste commit hash (e.g. 9b40ef983d) or owner/repo@sha…"
-              autocomplete="off"
-              spellcheck="false"
-            />
+        <div class="prompt-form-shell${staticDemo ? " static-mode" : ""}" id="prompt-form-shell">
+          ${staticDemo
+            ? '<div class="prompt-mode-header">' +
+                '<span class="prompt-mode-title">LOCAL CLI / SERVER MODE · LIVE COMMIT SURVEY</span>' +
+                '<span class="prompt-mode-cmd">npm run serve</span>' +
+              '</div>'
+            : ""}
+          <form class="prompt-form" id="analyze-form">
+            <div class="prompt-input-container">
+              <input
+                class="prompt-input"
+                id="analyze-input"
+                ${staticDemo ? "disabled" : ""}
+                type="text"
+                placeholder="${staticDemo ? "Run 'npm run serve' locally to paste any commit hash or owner/repo@sha…" : "Paste commit hash (e.g. 9b40ef983d) or owner/repo@sha…"}"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+
+            <button class="prompt-submit" id="analyze-submit" type="submit" ${staticDemo ? "disabled" : ""}>
+              <span id="analyze-submit-label">${staticDemo ? "Local Mode Only" : "Analyze Commit"}</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="prompt-status" id="analyze-status"></div>
+
+        <div class="presets-section" id="presets-section">
+          <div class="presets-header-row">
+            <h2 class="presets-label">${staticDemo ? "Choose a pinned repository snapshot" : "Surveyed Repository Folios at HEAD"}</h2>
           </div>
 
-          <button class="prompt-submit" id="analyze-submit" type="submit" ${staticDemo ? "disabled" : ""}>
-            <span id="analyze-submit-label">Analyze Commit</span>
-            <span class="btn-arrow-cue" aria-hidden="true">→</span>
-          </button>
-        </form>
-      </div>
-
-      <div class="prompt-status" id="analyze-status"></div>
-
-      <!-- 4. Clean Divisionals & Repository Cards -->
-      <div class="presets-section" id="presets-section">
-        <div class="section-divider" aria-hidden="true"></div>
-
-        <div class="presets-header-row">
-          <div class="presets-label">${staticDemo ? "Choose a pinned repository snapshot" : "Or inspect a local repository at HEAD"}</div>
+          <div class="preset-grid" id="preset-grid"></div>
         </div>
-
-        <div class="preset-grid" id="preset-grid"></div>
       </div>
     </div>
   </section>
@@ -1219,29 +1308,28 @@ export function renderFeatureMapAppShellHtml(
   <div class="app hidden" id="visualizer-app">
     <header class="topbar">
       <div class="brand">
-        <span class="brand-mark" id="brand-home" title="Analyze another commit">
-          <span class="status-dot-core" style="width:6px;height:6px"></span>
-          <span>EMARA</span>
-        </span>
+        <button type="button" class="brand-mark" id="brand-home" title="Return to repository survey index">
+          <span>EMARA ATLAS</span>
+        </button>
         <span class="repo-title" id="repo-title"></span>
         <span class="commit-pill" id="repo-commit"></span>
       </div>
-      <nav class="lens-tabs" aria-label="Architecture views">
-        <button class="lens-tab active" data-lens="features">
-          Features <span class="lens-count" id="count-features">0</span>
+      <nav class="lens-tabs" aria-label="Architecture survey views">
+        <button type="button" class="lens-tab active" data-lens="features">
+          Capability Parcels <span class="lens-count" id="count-features">0</span>
         </button>
-        <button class="lens-tab" data-lens="shared">
-          Shared &amp; Core <span class="lens-count" id="count-shared">0</span>
+        <button type="button" class="lens-tab" data-lens="shared">
+          Shared Easements <span class="lens-count" id="count-shared">0</span>
         </button>
-        <button class="lens-tab" data-lens="orphans">
+        <button type="button" class="lens-tab" data-lens="orphans">
           Deletion review <span class="lens-count" id="count-orphans">0</span>
         </button>
       </nav>
       <div class="topbar-right">
-        <button class="switch-btn" id="new-commit-btn" title="Analyze a different commit or repository">
-          <span>${staticDemo ? "Choose snapshot…" : "Analyze Commit…"}</span>
+        <button type="button" class="switch-btn" id="new-commit-btn" title="Analyze a different commit or repository">
+          <span>${staticDemo ? "Switch Snapshot…" : "Analyze Commit…"}</span>
         </button>
-        <button class="sim-toggle" id="sim-toggle" title="Preview static removal impact; this does not prove that any file is safe to delete">
+        <button type="button" class="sim-toggle" id="sim-toggle" title="Preview static removal impact; this does not prove that any file is safe to delete">
           <span>Simulate Removal</span>
         </button>
       </div>
@@ -1249,8 +1337,12 @@ export function renderFeatureMapAppShellHtml(
 
     <div class="workspace" id="workspace">
       <aside class="sidebar">
-        <div class="sidebar-search">
-          <input class="search-input" id="search-input" type="search" placeholder="Filter features, routes, or files…" autocomplete="off" />
+        <div class="sidebar-head">
+          <div class="sidebar-title-row">
+            <h2 class="sidebar-heading">Parcel Schedule</h2>
+            <span class="sidebar-folio-note">INDEX</span>
+          </div>
+          <input class="search-input" id="search-input" type="search" placeholder="Filter parcels, routes, or files…" autocomplete="off" />
         </div>
         <div class="sidebar-list" id="sidebar-list"></div>
       </aside>
@@ -1263,12 +1355,12 @@ export function renderFeatureMapAppShellHtml(
       <aside class="inspector" id="inspector">
         <div class="inspector-header">
           <div style="min-width:0">
-            <div class="inspector-file" id="inspector-file">Source Evidence</div>
-            <div class="inspector-sub" id="inspector-sub">Click any route, file, or connection</div>
+            <div class="inspector-file" id="inspector-file">Verified Source Deed</div>
+            <div class="inspector-sub" id="inspector-sub">Select any entrypoint, parcel file, or shared easement</div>
           </div>
         </div>
         <div class="code-viewer" id="code-viewer">
-          <div class="empty-note" style="margin:16px">Select any file, entrypoint, or dependency edge to inspect the verified source lines.</div>
+          <div class="empty-note" style="margin:16px">Select any file, entrypoint, or dependency connection to inspect SHA-256 verified source lines.</div>
         </div>
       </aside>
     </div>
@@ -1292,7 +1384,7 @@ export function renderFeatureMapAppShellHtml(
     let selectedBlockId = null;
     let searchQuery = "";
     let simulateRemoval = false;
-    let ambientBoost = 0;
+    let hoveredAnchorId = null;
 
     const landingScreen = document.getElementById("landing-screen");
     const visualizerApp = document.getElementById("visualizer-app");
@@ -1310,227 +1402,13 @@ export function renderFeatureMapAppShellHtml(
         .replace(/"/g, "&quot;");
     }
 
-    /* ========================================================================
-       AMBIENT AST NETWORK BACKGROUND ENGINE (60FPS CANVAS - CHAMPAGNE DRIFT)
-       ======================================================================== */
-    (function initAmbientAstCanvas() {
-      const canvas = document.getElementById("ambient-graph-canvas");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    function escBreakable(str) {
+      return esc(str)
+        .replaceAll("/", "/<wbr>")
+        .replaceAll(".", ".<wbr>")
+        .replaceAll("-", "-<wbr>");
+    }
 
-      const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      let width = (canvas.width = window.innerWidth);
-      let height = (canvas.height = window.innerHeight);
-      let pointerX = width * 0.5;
-      let pointerY = height * 0.5;
-
-      const astLabels = [
-        "AST::Program", "route:POST", "fn:slice()", "ImportDecl",
-        "Reachability", "SchemaNode", "CallGraph", "0x9b40ef9",
-        "ExportSpec", "Entrypoint", "SharedCore", "TreeSitter"
-      ];
-
-      const nodeCount = 32;
-      const astNodes = Array.from({ length: nodeCount }, (_, idx) => {
-        const depth = idx % 3; // 0: background bokeh, 1: midground, 2: foreground AST node
-        const hue = idx % 3 === 0
-          ? "rgba(212, 175, 55, 0.45)"
-          : idx % 2 === 0
-            ? "rgba(243, 229, 171, 0.35)"
-            : "rgba(229, 193, 88, 0.28)";
-        return {
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * (0.10 + depth * 0.06),
-          vy: (Math.random() - 0.5) * (0.10 + depth * 0.06),
-          radius: depth === 0 ? 3.0 : depth === 1 ? 1.8 : 2.4,
-          depth,
-          hue,
-          label: idx < astLabels.length ? astLabels[idx] : null,
-          phase: Math.random() * Math.PI * 2,
-        };
-      });
-
-      const packets = Array.from({ length: 10 }, (_, idx) => ({
-        fromIdx: idx % nodeCount,
-        toIdx: (idx * 3 + 5) % nodeCount,
-        t: Math.random(),
-        speed: 0.003 + (idx % 4) * 0.0014,
-      }));
-
-      window.addEventListener("resize", () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      });
-
-      window.addEventListener("pointermove", (e) => {
-        pointerX = e.clientX;
-        pointerY = e.clientY;
-      }, { passive: true });
-
-      function drawFrame(now) {
-        if (!document.hidden && !landingScreen.classList.contains("hidden")) {
-          ctx.clearRect(0, 0, width, height);
-          const speedMult = 1 + ambientBoost * 1.5;
-
-          for (let i = 0; i < nodeCount; i++) {
-            const n = astNodes[i];
-            if (!prefersReducedMotion) {
-              n.x += n.vx * speedMult;
-              n.y += n.vy * speedMult;
-              if (n.x < -40) n.x = width + 40;
-              if (n.x > width + 40) n.x = -40;
-              if (n.y < -40) n.y = height + 40;
-              if (n.y > height + 40) n.y = -40;
-            }
-          }
-
-          // Draw AST edges between nearby nodes
-          const maxDist = 200;
-          for (let i = 0; i < nodeCount; i++) {
-            const a = astNodes[i];
-            for (let j = i + 1; j < nodeCount; j++) {
-              const b = astNodes[j];
-              const dx = b.x - a.x;
-              const dy = b.y - a.y;
-              const distSq = dx * dx + dy * dy;
-              if (distSq < maxDist * maxDist) {
-                const dist = Math.sqrt(distSq);
-                const alpha = (1 - dist / maxDist) * (0.12 + ambientBoost * 0.08);
-                ctx.strokeStyle = "rgba(212, 175, 55, " + alpha.toFixed(3) + ")";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(a.x, a.y);
-                ctx.lineTo(b.x, b.y);
-                ctx.stroke();
-              }
-            }
-          }
-
-          // Draw subtle animated packets along edges
-          for (const pkt of packets) {
-            const a = astNodes[pkt.fromIdx];
-            const b = astNodes[pkt.toIdx];
-            const dx = b.x - a.x;
-            const dy = b.y - a.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < maxDist * 1.35) {
-              if (!prefersReducedMotion) {
-                pkt.t += pkt.speed * speedMult;
-                if (pkt.t >= 1) {
-                  pkt.t = 0;
-                  pkt.fromIdx = pkt.toIdx;
-                  pkt.toIdx = (pkt.toIdx + 1 + Math.floor(Math.random() * 5)) % nodeCount;
-                }
-              }
-              const px = a.x + dx * pkt.t;
-              const py = a.y + dy * pkt.t;
-              ctx.fillStyle = "rgba(243, 229, 171, 0.55)";
-              ctx.beginPath();
-              ctx.arc(px, py, 1.6, 0, Math.PI * 2);
-              ctx.fill();
-            } else {
-              pkt.toIdx = (pkt.fromIdx + 1) % nodeCount;
-            }
-          }
-
-          // Draw AST nodes & subtle labels
-          for (let i = 0; i < nodeCount; i++) {
-            const n = astNodes[i];
-            const pulse = 0.7 + 0.3 * Math.sin(now * 0.0018 + n.phase);
-            const pdx = n.x - pointerX;
-            const pdy = n.y - pointerY;
-            const pDist = Math.hypot(pdx, pdy);
-            const nearBoost = pDist < 200 ? (1 - pDist / 200) * 0.35 : 0;
-
-            ctx.save();
-            ctx.globalAlpha = (n.depth === 0 ? 0.2 : n.depth === 1 ? 0.4 : 0.65) * pulse + nearBoost;
-            ctx.fillStyle = n.hue;
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, n.radius + nearBoost * 1.2, 0, Math.PI * 2);
-            ctx.fill();
-
-            if (n.depth === 2) {
-              ctx.strokeStyle = "rgba(212, 175, 55, 0.18)";
-              ctx.lineWidth = 1;
-              ctx.beginPath();
-              ctx.arc(n.x, n.y, n.radius + 3, 0, Math.PI * 2);
-              ctx.stroke();
-            }
-
-            if (n.label && n.depth === 2) {
-              ctx.font = '500 9px "JetBrains Mono", monospace';
-              ctx.fillStyle = "rgba(161, 161, 170, 0.35)";
-              ctx.fillText(n.label, n.x + 8, n.y + 3);
-            }
-            ctx.restore();
-          }
-
-          ambientBoost = Math.max(0, ambientBoost * 0.96);
-        }
-        if (!prefersReducedMotion) {
-          requestAnimationFrame(drawFrame);
-        }
-      }
-
-      requestAnimationFrame(drawFrame);
-    })();
-
-    /* ========================================================================
-       DYNAMIC INPUT INTERACTIONS & PLACEHOLDER TYPEWRITER
-       ======================================================================== */
-    (function initPromptInputInteractions() {
-      const examples = [
-        "Paste commit hash (e.g. 9b40ef983d) or owner/repo@sha…",
-        "Try louislam/uptime-kuma@HEAD or a 7–40 char SHA…",
-        "Slice capabilities: owner/repo@commit or local preset…"
-      ];
-      let exIdx = 0;
-      let charIdx = 0;
-      let deleting = false;
-      let timerId = null;
-
-      function tickPlaceholder() {
-        if (document.activeElement === analyzeInput || analyzeInput.value.length > 0) {
-          timerId = setTimeout(tickPlaceholder, 1200);
-          return;
-        }
-        const current = examples[exIdx];
-        if (!deleting) {
-          charIdx++;
-          analyzeInput.setAttribute("placeholder", current.slice(0, charIdx));
-          if (charIdx >= current.length) {
-            deleting = true;
-            timerId = setTimeout(tickPlaceholder, 2600);
-            return;
-          }
-          timerId = setTimeout(tickPlaceholder, 38);
-        } else {
-          charIdx--;
-          analyzeInput.setAttribute("placeholder", current.slice(0, Math.max(1, charIdx)));
-          if (charIdx <= 1) {
-            deleting = false;
-            exIdx = (exIdx + 1) % examples.length;
-            timerId = setTimeout(tickPlaceholder, 240);
-            return;
-          }
-          timerId = setTimeout(tickPlaceholder, 18);
-        }
-      }
-      timerId = setTimeout(tickPlaceholder, 2200);
-
-      analyzeInput.addEventListener("focus", () => {
-        ambientBoost = 0.6;
-      });
-      analyzeInput.addEventListener("input", () => {
-        ambientBoost = Math.min(1, ambientBoost + 0.35);
-      });
-    })();
-
-    /* ========================================================================
-       5. REPOSITORY CARDS (OBSIDIAN & GOLD + CURSOR-TRACKING SPOTLIGHT)
-       ======================================================================== */
     function renderPresets() {
       const section = document.getElementById("presets-section");
       const grid = document.getElementById("preset-grid");
@@ -1541,13 +1419,11 @@ export function renderFeatureMapAppShellHtml(
       section.classList.remove("hidden");
 
       grid.innerHTML = presets.map((p) => {
-        // Parse owner and repo name from label if formatted as "owner/repo"
         const slashIdx = p.label.indexOf("/");
         const hasSlash = slashIdx !== -1;
         const owner = hasSlash ? p.label.slice(0, slashIdx + 1) : "";
         const repoName = hasSlash ? p.label.slice(slashIdx + 1) : p.label;
 
-        // Parse stars from subtitle if present (e.g. "85k★ · ...")
         const starMatch = (p.subtitle || "").match(/^([0-9.]+k?)[★*]?/u);
         const rawStars = starMatch ? starMatch[1] : null;
         let cleanSub = (p.subtitle || "").trim();
@@ -1576,13 +1452,6 @@ export function renderFeatureMapAppShellHtml(
       }).join("");
 
       grid.querySelectorAll("[data-preset]").forEach((btn) => {
-        btn.addEventListener("pointermove", (e) => {
-          const rect = btn.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const y = e.clientY - rect.top;
-          btn.style.setProperty("--mouse-x", x.toFixed(1) + "px");
-          btn.style.setProperty("--mouse-y", y.toFixed(1) + "px");
-        });
         btn.addEventListener("click", () => {
           const val = btn.getAttribute("data-preset");
           const presetObj = presets.find((p) => p.id === val);
@@ -1591,7 +1460,6 @@ export function renderFeatureMapAppShellHtml(
             return;
           }
           analyzeInput.value = val;
-          ambientBoost = 1;
           runAnalyzeRequest(val);
         });
       });
@@ -1605,11 +1473,9 @@ export function renderFeatureMapAppShellHtml(
         return;
       }
       analyzeSubmit.disabled = true;
-      analyzeSubmit.classList.add("is-loading");
-      if (analyzeSubmitLabel) analyzeSubmitLabel.textContent = "Slicing AST…";
+      if (analyzeSubmitLabel) analyzeSubmitLabel.textContent = "Surveying AST…";
       analyzeStatus.classList.remove("error");
-      analyzeStatus.textContent = 'Analyzing "' + trimmed + '" — indexing AST, slicing entrypoints & building feature map…';
-      ambientBoost = 1;
+      analyzeStatus.textContent = 'Surveying "' + trimmed + '" — indexing AST, mapping capability parcels & shared easements…';
 
       try {
         const res = await fetch("/api/analyze", {
@@ -1628,7 +1494,6 @@ export function renderFeatureMapAppShellHtml(
         analyzeStatus.classList.add("error");
       } finally {
         analyzeSubmit.disabled = false;
-        analyzeSubmit.classList.remove("is-loading");
         if (analyzeSubmitLabel) analyzeSubmitLabel.textContent = "Analyze Commit";
       }
     }
@@ -1637,8 +1502,73 @@ export function renderFeatureMapAppShellHtml(
       visualizerApp.classList.add("hidden");
       landingScreen.classList.remove("hidden");
       renderPresets();
-      analyzeInput.focus();
-      analyzeInput.select();
+      if (!analyzeInput.disabled) {
+        analyzeInput.focus();
+        analyzeInput.select();
+      }
+    }
+
+    function summarizeConnectionLabel(label) {
+      const raw = String(label || "").trim();
+      if (!raw) return "";
+      const parts = raw.split(";").map((s) => s.trim()).filter(Boolean);
+      if (parts.length <= 1) return raw;
+      return parts[0] + " (+" + (parts.length - 1) + " refs)";
+    }
+
+    function groupSortRank(groupName) {
+      if (groupName.startsWith("API ·")) return 1;
+      if (groupName === "Core Modules") return 2;
+      if (groupName === "Frontend & UI") return 3;
+      if (groupName === "CLI & Scripts") return 4;
+      if (groupName === "Documented / Missing") return 5;
+      return 3;
+    }
+
+    function deduplicateConnections(conns, keyProp) {
+      const byTarget = new Map();
+      for (const c of conns) {
+        const k = c[keyProp];
+        if (!byTarget.has(k)) {
+          byTarget.set(k, { ...c, allLabels: [c.label] });
+        } else {
+          byTarget.get(k).allLabels.push(c.label);
+        }
+      }
+      return Array.from(byTarget.values()).map((entry) => ({
+        ...entry,
+        label: entry.allLabels.join("; "),
+      }));
+    }
+
+    function pickDefaultFeatureBlock(blocks, connections) {
+      if (!blocks || blocks.length === 0) return null;
+      let best = blocks[0];
+      let bestScore = -1000;
+      for (const b of blocks) {
+        const outCount = new Set(connections.filter((c) => c.from === b.id).map((c) => c.to)).size;
+        const inCount = new Set(connections.filter((c) => c.to === b.id).map((c) => c.from)).size;
+        const fileCount = b.filePaths.length;
+        const group = classifyFeatureGroup(b);
+        const isApiOrCore = group.startsWith("API ·") || group === "Core Modules";
+        const isRightSized = fileCount >= 1 && fileCount <= 10 && (b.studs.length + inCount) >= 1 && (b.studs.length + inCount) <= 8;
+        const hasOut = outCount >= 1 && outCount <= 6;
+        const hasRichSource = b.size.lines >= 30 && b.size.lines <= 2500;
+        const freedCount = b.removalImpact?.freedFiles?.length || 0;
+        const score =
+          (isApiOrCore ? 50 : 0) +
+          (isRightSized ? 45 : -30) +
+          (hasOut ? 40 : 0) +
+          (hasRichSource ? 30 : 0) +
+          (freedCount >= 1 && freedCount <= 6 ? 65 : 0) +
+          Math.min(outCount, 5) * 6 +
+          Math.min(b.studs.length, 4) * 5;
+        if (score > bestScore) {
+          bestScore = score;
+          best = b;
+        }
+      }
+      return best;
     }
 
     function loadPayloadIntoVisualizer(payload) {
@@ -1653,12 +1583,13 @@ export function renderFeatureMapAppShellHtml(
       orphanBlocks = featureMap.blocks.filter((b) => b.kind === "orphan");
 
       activeLens = "features";
-      selectedBlockId = featureBlocks[0]?.id || sharedBlocks[0]?.id || orphanBlocks[0]?.id || null;
+      const defaultFeature = pickDefaultFeatureBlock(featureBlocks, featureMap.connections || []);
+      selectedBlockId = defaultFeature?.id || sharedBlocks[0]?.id || orphanBlocks[0]?.id || null;
       simulateRemoval = false;
       document.getElementById("sim-toggle").classList.remove("active");
 
       document.getElementById("repo-title").textContent = repositoryName;
-      document.getElementById("repo-commit").textContent = featureMap.repositoryCommit.slice(0, 10);
+      document.getElementById("repo-commit").textContent = "FOLIO " + featureMap.repositoryCommit.slice(0, 10);
       document.getElementById("count-features").textContent = String(featureBlocks.length);
       document.getElementById("count-shared").textContent = String(sharedBlocks.length);
       document.getElementById("count-orphans").textContent = String(orphanBlocks.length);
@@ -1698,14 +1629,14 @@ export function renderFeatureMapAppShellHtml(
     function statusBadge(block) {
       const s = block.status;
       if (s === "IMPLEMENTED_DOCUMENTED") return '<span class="badge badge-ok">DOCUMENTED</span>';
-      if (s === "IMPLEMENTED_UNDOCUMENTED") return '<span class="badge badge-http">IMPLEMENTED</span>';
+      if (s === "IMPLEMENTED_UNDOCUMENTED") return '<span class="badge badge-http">EXCLUSIVE PARCEL</span>';
       if (s === "PARTIALLY_IMPLEMENTED") return '<span class="badge badge-warn">PARTIAL</span>';
       if (s === "DOCUMENTED_NOT_IMPLEMENTED") return '<span class="badge badge-danger">MISSING</span>';
-      if (s === "VALIDATED_SAFE_TO_DELETE") return '<span class="badge badge-ok">SAFE DELETE</span>';
-      if (s === "VALIDATION_REQUIRED" || s === "CANDIDATE") return '<span class="badge badge-warn">UNUSED CANDIDATE</span>';
+      if (s === "VALIDATED_SAFE_TO_DELETE") return '<span class="badge badge-ok">VERIFIED UNUSED</span>';
+      if (s === "VALIDATION_REQUIRED" || s === "CANDIDATE") return '<span class="badge badge-warn">REVIEW CANDIDATE</span>';
       if (s === "UNKNOWN_DYNAMIC_USAGE") return '<span class="badge badge-neutral">DYNAMIC</span>';
-      if (s === "SHARED_ACTIVE") return '<span class="badge badge-cli">SHARED</span>';
-      if (s === "BASEPLATE_ACTIVE") return '<span class="badge badge-ui">CORE CONFIG</span>';
+      if (s === "SHARED_ACTIVE") return '<span class="badge badge-cli">EASEMENT</span>';
+      if (s === "BASEPLATE_ACTIVE") return '<span class="badge badge-ui">BASEPLATE</span>';
       return '<span class="badge badge-neutral">' + esc(s) + '</span>';
     }
 
@@ -1730,7 +1661,7 @@ export function renderFeatureMapAppShellHtml(
       const end = Math.max(start, Number(lineEnd) || start);
       fileEl.textContent = filePath;
       subEl.textContent = sourceEntry
-        ? "Line " + start + (end > start ? "–" + end : "") + " · sha256:" + sourceEntry.hash.slice(0, 12)
+        ? "Line " + start + (end > start ? "–" + end : "") + " · Deed sha256:" + sourceEntry.hash.slice(0, 12)
         : "Line " + start;
 
       if (!sourceEntry || !Array.isArray(sourceEntry.lines)) {
@@ -1775,7 +1706,7 @@ export function renderFeatureMapAppShellHtml(
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="empty-note">No matching blocks.</div>';
+        container.innerHTML = '<div class="empty-note">No matching parcels found.</div>';
         return;
       }
 
@@ -1784,23 +1715,29 @@ export function renderFeatureMapAppShellHtml(
         const g = activeLens === "features"
           ? classifyFeatureGroup(block)
           : activeLens === "shared"
-            ? (block.kind === "infrastructure" ? "Core Baseplate" : "Shared Subsystems")
+            ? (block.kind === "infrastructure" ? "Core Baseplate" : "Shared Easements")
             : String(block.status);
         if (!groups.has(g)) groups.set(g, []);
         groups.get(g).push(block);
       }
 
+      const sortedEntries = Array.from(groups.entries()).sort((a, b) => {
+        const rankDiff = groupSortRank(a[0]) - groupSortRank(b[0]);
+        if (rankDiff !== 0) return rankDiff;
+        return a[0].localeCompare(b[0]);
+      });
+
       let html = "";
-      for (const [groupName, items] of groups.entries()) {
+      for (const [groupName, items] of sortedEntries) {
         html += '<div class="group-header"><span>' + esc(groupName) + '</span><span>' + items.length + '</span></div>';
         for (const item of items) {
           const isActive = item.id === selectedBlockId;
-          const consumerCount = featureMap.connections.filter((c) => c.to === item.id).length;
+          const consumerCount = new Set(featureMap.connections.filter((c) => c.to === item.id).map((c) => c.from)).size;
           const rightMeta = activeLens === "shared"
-            ? consumerCount + " consumers"
+            ? consumerCount + " parcels"
             : item.size.files + "f · " + item.size.lines + "L";
           html +=
-            '<button class="nav-item' + (isActive ? ' active' : '') + '" data-select-block="' + esc(item.id) + '">' +
+            '<button type="button" class="nav-item' + (isActive ? ' active' : '') + '" data-select-block="' + esc(item.id) + '">' +
               '<div class="nav-item-top">' +
                 '<span class="nav-item-title">' + esc(item.title) + '</span>' +
               '</div>' +
@@ -1812,6 +1749,11 @@ export function renderFeatureMapAppShellHtml(
         }
       }
       container.innerHTML = html;
+
+      const activeBtn = container.querySelector(".nav-item.active");
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ block: "nearest" });
+      }
 
       container.querySelectorAll("[data-select-block]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1833,30 +1775,28 @@ export function renderFeatureMapAppShellHtml(
       const block = blocksById.get(selectedBlockId);
 
       if (!block) {
-        headerEl.innerHTML = '<div><h1 class="stage-title">Select an item from the left rail</h1></div>';
+        headerEl.innerHTML = '<div class="stage-title-group"><h1 class="stage-title">Select a parcel from the schedule</h1></div>';
         bodyEl.innerHTML = "";
         return;
       }
 
-      const outgoing = featureMap.connections.filter((c) => c.from === block.id);
-      const incoming = featureMap.connections.filter((c) => c.to === block.id);
-
-      const kindLabel =
-        block.kind === "feature" ? "FEATURE ARCHITECTURE FLOW" :
-        block.kind === "shared_subsystem" ? "SHARED SUBSYSTEM COUPLING" :
-        block.kind === "infrastructure" ? "RUNTIME & CONFIGURATION BASEPLATE" :
-        "DETACHED / UNUSED CODE CANDIDATE";
+      const outgoing = deduplicateConnections(featureMap.connections.filter((c) => c.from === block.id), "to");
+      const incoming = deduplicateConnections(featureMap.connections.filter((c) => c.to === block.id), "from");
+      const previewPaths = block.filePaths.slice(0, 3).join(", ") + (block.filePaths.length > 3 ? " (+" + (block.filePaths.length - 3) + " more)" : "");
 
       headerEl.innerHTML =
-        '<div>' +
-          '<div class="stage-kicker">' + esc(kindLabel) + '</div>' +
+        '<div class="stage-title-group">' +
           '<h1 class="stage-title">' + esc(block.title) + '</h1>' +
           '<p class="stage-subtitle">' +
-            esc(block.filePaths.join(", ") || "No implementation files") +
+            escBreakable(previewPaths || "No implementation files") +
             ' · ' + block.size.files + ' file(s), ' + block.size.lines + ' lines' +
           '</p>' +
+          '<div class="stage-legend-bar">' +
+            '<span class="legend-swatch"><span class="swatch-box swatch-exclusive"></span>Surveyor Blue: Exclusive Parcel</span>' +
+            '<span class="legend-swatch"><span class="swatch-box swatch-shared"></span>Surveyor Ochre: Shared Right-of-Way</span>' +
+          '</div>' +
         '</div>' +
-        '<div style="display:flex;gap:8px;align-items:center">' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-shrink:0">' +
           statusBadge(block) +
         '</div>';
 
@@ -1865,9 +1805,16 @@ export function renderFeatureMapAppShellHtml(
         return;
       }
 
+      const seenSymbolKeys = new Set();
       const exclusiveSymbols = block.exclusiveNodeIds
         .map((id) => nodes[id])
-        .filter((n) => n && n.type !== "file" && n.type !== "entrypoint" && n.type !== "endpoint");
+        .filter((n) => {
+          if (!n || n.type === "file" || n.type === "entrypoint" || n.type === "endpoint") return false;
+          const k = n.name + ":" + n.type;
+          if (seenSymbolKeys.has(k)) return false;
+          seenSymbolKeys.add(k);
+          return true;
+        });
 
       const sharedFileSet = new Set(
         block.sharedNodeIds
@@ -1882,13 +1829,15 @@ export function renderFeatureMapAppShellHtml(
 
       if (simulateRemoval && block.kind === "feature" && block.removalImpact) {
         const impact = block.removalImpact;
+        const previewFreed = impact.freedFiles.slice(0, 4).join(", ") +
+          (impact.freedFiles.length > 4 ? " (+" + (impact.freedFiles.length - 4) + " more)" : "");
         simBannerHtml =
           '<div class="sim-banner">' +
             '<div>' +
               '<strong>Simulated Removal of "' + esc(block.title) + '"</strong><br/>' +
-              '<span style="color:var(--text-1);font-size:12px">' +
+              '<span style="font-size:13px">' +
                 (impact.freedFiles.length > 0
-                  ? 'Statically exclusive to this capability: <strong>' + impact.freedFiles.length + ' file(s) (' + impact.freedLines + ' lines)</strong>, not validated for deletion: ' + esc(impact.freedFiles.join(", "))
+                  ? 'Statically exclusive to this capability: <strong>' + impact.freedFiles.length + ' file(s) (' + impact.freedLines + ' lines)</strong>, not validated for deletion: ' + escBreakable(previewFreed)
                   : '0 files exclusively owned (this capability shares its files with other active capabilities).') +
                 (impact.degradedToSingleConsumerBlockIds.length > 0
                   ? ' · Degrades ' + impact.degradedToSingleConsumerBlockIds.length + ' shared module(s) to a single remaining consumer.'
@@ -1899,27 +1848,33 @@ export function renderFeatureMapAppShellHtml(
       }
 
       let leftColTitle = block.kind === "feature"
-        ? '<span>1. Entrypoints &amp; Triggers</span><span>' + (block.studs.length + incoming.length) + '</span>'
-        : '<span>1. Consuming Features</span><span>' + incoming.length + '</span>';
+        ? '<span>Access &amp; Entrypoints</span><span class="col-count">' + (block.studs.length + incoming.length) + '</span>'
+        : '<span>Consuming Parcels</span><span class="col-count">' + incoming.length + '</span>';
 
       let leftCardsHtml = "";
+      const maxLeftCards = 6;
+      let leftShown = 0;
       if (block.kind === "feature") {
         if (block.studs.length === 0 && incoming.length === 0) {
           leftCardsHtml = '<div class="empty-note">Internal module / no direct external route</div>';
         }
         for (const stud of block.studs) {
+          if (leftShown >= maxLeftCards) break;
+          leftShown++;
           leftCardsHtml +=
             '<div class="flow-card clickable" data-anchor-left="' + esc(stud.id) + '" data-open-file="' + esc(stud.evidence.file) + '" data-open-line="' + stud.evidence.line + '">' +
               '<div class="card-title-row">' +
                 '<span class="card-title">' + esc(stud.label) + '</span>' +
                 studBadge(stud) +
               '</div>' +
-              '<div class="card-loc">' + esc(stud.evidence.file) + ':' + stud.evidence.line + '</div>' +
+              '<div class="card-loc">' + escBreakable(stud.evidence.file) + ':' + stud.evidence.line + '</div>' +
             '</div>';
         }
         for (const conn of incoming) {
+          if (leftShown >= maxLeftCards) break;
           const caller = blocksById.get(conn.from);
           if (!caller) continue;
+          leftShown++;
           const ev = conn.evidence[0];
           leftCardsHtml +=
             '<div class="flow-card clickable" data-anchor-left="' + esc(conn.id) + '" data-pivot-block="' + esc(caller.id) + '">' +
@@ -1927,14 +1882,18 @@ export function renderFeatureMapAppShellHtml(
                 '<span class="card-title">' + esc(caller.title) + '</span>' +
                 '<span class="badge badge-neutral">CALLER</span>' +
               '</div>' +
-              '<div class="card-loc">' + esc(conn.label) + (ev ? ' (' + esc(ev.file) + ':' + ev.line + ')' : '') + '</div>' +
+              '<div class="card-loc">' + escBreakable(summarizeConnectionLabel(conn.label)) + (ev ? ' · ' + escBreakable(ev.file) + ':' + ev.line : '') + '</div>' +
             '</div>';
+        }
+        const totalLeft = block.studs.length + incoming.length;
+        if (totalLeft > leftShown) {
+          leftCardsHtml += '<div class="code-row" style="color:var(--ink-2)"><span>+' + (totalLeft - leftShown) + ' additional entrypoints / callers</span></div>';
         }
       } else {
         if (incoming.length === 0) {
           leftCardsHtml = '<div class="empty-note">No direct feature connections recorded</div>';
         }
-        for (const conn of incoming) {
+        for (const conn of incoming.slice(0, maxLeftCards)) {
           const consumer = blocksById.get(conn.from);
           if (!consumer) continue;
           const ev = conn.evidence[0];
@@ -1945,59 +1904,69 @@ export function renderFeatureMapAppShellHtml(
                 statusBadge(consumer) +
               '</div>' +
               '<div class="card-loc" data-open-file="' + esc(ev?.file || "") + '" data-open-line="' + (ev?.line || 1) + '">' +
-                esc(conn.label) + (ev ? ' · ' + esc(ev.file) + ':' + ev.line : '') +
+                escBreakable(summarizeConnectionLabel(conn.label)) + (ev ? ' · ' + escBreakable(ev.file) + ':' + ev.line : '') +
               '</div>' +
             '</div>';
+        }
+        if (incoming.length > maxLeftCards) {
+          leftCardsHtml += '<div class="code-row" style="color:var(--ink-2)"><span>+' + (incoming.length - maxLeftCards) + ' additional consuming parcels</span></div>';
         }
       }
 
       const centerSimClass = simulateRemoval && block.kind === "feature" ? " sim-removed" : "";
       let centerFilesHtml = "";
-      for (const filePath of block.filePaths) {
+      const maxFilesShown = 8;
+      for (const filePath of block.filePaths.slice(0, maxFilesShown)) {
         const isFreed = simulateRemoval && freedFilesSet.has(filePath);
         centerFilesHtml +=
-          '<div class="code-row' + (isFreed ? ' freed-highlight' : '') + '" data-open-file="' + esc(filePath) + '" data-open-line="1">' +
-            '<span>' + esc(filePath) + '</span>' +
-            '<span class="badge ' + (isFreed ? 'badge-danger' : 'badge-neutral') + '">' + (isFreed ? 'EXCLUSIVE' : 'OWNED') + '</span>' +
+          '<div class="code-row' + (isFreed ? ' freed-highlight' : ' owned-deed') + '" data-open-file="' + esc(filePath) + '" data-open-line="1">' +
+            '<span class="code-row-path" title="' + esc(filePath) + '">' + esc(filePath) + '</span>' +
+            '<span class="badge ' + (isFreed ? 'badge-danger' : 'badge-http') + '">' + (isFreed ? 'EXCLUSIVE' : 'OWNED') + '</span>' +
           '</div>';
       }
-      for (const sharedPath of sharedFileSet) {
-        if (block.filePaths.includes(sharedPath)) continue;
+      if (block.filePaths.length > maxFilesShown) {
+        centerFilesHtml += '<div class="code-row" style="color:var(--ink-2)"><span>+' + (block.filePaths.length - maxFilesShown) + ' additional implementation files in parcel</span></div>';
+      }
+      const unownedSharedFiles = Array.from(sharedFileSet).filter((p) => !block.filePaths.includes(p));
+      for (const sharedPath of unownedSharedFiles.slice(0, 4)) {
         centerFilesHtml +=
           '<div class="code-row borrowed" data-open-file="' + esc(sharedPath) + '" data-open-line="1">' +
-            '<span>' + esc(sharedPath) + '</span>' +
-            '<span class="badge badge-neutral">SHARED FILE</span>' +
+            '<span class="code-row-path" title="' + esc(sharedPath) + '">' + esc(sharedPath) + '</span>' +
+            '<span class="badge badge-cli">SHARED DEED</span>' +
           '</div>';
       }
 
       let centerSymbolsHtml = "";
-      for (const sym of exclusiveSymbols.slice(0, 14)) {
+      for (const sym of exclusiveSymbols.slice(0, 8)) {
+        const suffix = (sym.type === "function" || sym.type === "method") ? "()" : "";
         centerSymbolsHtml +=
           '<div class="code-row" data-open-file="' + esc(sym.file) + '" data-open-line="' + sym.lineStart + '" data-open-end="' + sym.lineEnd + '">' +
-            '<span>' + esc(sym.name) + '()</span>' +
-            '<span style="color:var(--text-2);font-size:10.5px">' + esc(sym.type) + ' · L' + sym.lineStart + '</span>' +
+            '<span class="code-row-path">' + esc(sym.name) + suffix + '</span>' +
+            '<span style="color:var(--ink-2);font-size:12px">' + esc(sym.type) + ' · L' + sym.lineStart + '</span>' +
           '</div>';
       }
 
       let gapsHtml = "";
       if (block.gaps && block.gaps.length > 0) {
         gapsHtml =
-          '<div class="section-label" style="color:var(--amber)">Audit Gaps &amp; Warnings</div>' +
+          '<div class="section-label">Survey Notes &amp; Gaps</div>' +
           '<div class="chip-list">' +
-            block.gaps.map((g) => '<div class="code-row" style="border-color:rgba(245,158,11,0.4);color:var(--amber);white-space:normal">' + esc(g) + '</div>').join("") +
+            block.gaps.slice(0, 3).map((g) => '<div class="code-row borrowed" style="white-space:normal">' + esc(g) + '</div>').join("") +
           '</div>';
       }
 
       const centerCardHtml =
         '<div class="flow-card primary-card' + centerSimClass + '" id="center-focus-card">' +
-          '<div class="card-title-row">' +
-            '<span class="card-title" style="font-size:15px">' + esc(block.title) + '</span>' +
-            '<span class="badge badge-neutral">' + esc(block.confidence) + '</span>' +
+          '<div class="parcel-summary-head">' +
+            '<div class="card-title-row">' +
+              '<span class="card-title" style="font-size:15px">' + esc(block.title) + '</span>' +
+              '<span class="badge badge-http">' + esc(block.confidence) + '</span>' +
+            '</div>' +
+            '<div style="color:var(--ink-1);font-size:12px;font-family:var(--mono)">' +
+              escBreakable(block.slug) + ' · ' + block.exclusiveNodeIds.length + ' exclusive nodes, ' + block.sharedNodeIds.length + ' shared' +
+            '</div>' +
           '</div>' +
-          '<div style="color:var(--text-2);font-size:11.5px;font-family:var(--mono);margin-bottom:8px">' +
-            esc(block.slug) + ' · ' + block.exclusiveNodeIds.length + ' exclusive nodes, ' + block.sharedNodeIds.length + ' shared' +
-          '</div>' +
-          '<div class="section-label">Implementation Files (' + block.filePaths.length + ')</div>' +
+          '<div class="section-label">Deeded Implementation Files (' + block.filePaths.length + ')</div>' +
           '<div class="chip-list">' + (centerFilesHtml || '<div class="empty-note">No implementation files</div>') + '</div>' +
           (centerSymbolsHtml
             ? '<div class="section-label">Owned Symbols &amp; Handlers (' + exclusiveSymbols.length + ')</div><div class="chip-list">' + centerSymbolsHtml + '</div>'
@@ -2005,12 +1974,12 @@ export function renderFeatureMapAppShellHtml(
           gapsHtml +
         '</div>';
 
-      let rightColTitle = '<span>3. Shared Modules &amp; Dependencies</span><span>' + outgoing.length + '</span>';
+      let rightColTitle = '<span>Shared Easements</span><span class="col-count">' + outgoing.length + '</span>';
       let rightCardsHtml = "";
       if (outgoing.length === 0) {
-        rightCardsHtml = '<div class="empty-note">Self-contained — no outbound shared module dependencies</div>';
+        rightCardsHtml = '<div class="empty-note">Self-contained parcel — no outbound shared easements</div>';
       } else {
-        for (const conn of outgoing) {
+        for (const conn of outgoing.slice(0, 6)) {
           const target = blocksById.get(conn.to);
           if (!target) continue;
           const totalConsumers = featureMap.connections.filter((c) => c.to === target.id).length;
@@ -2022,20 +1991,20 @@ export function renderFeatureMapAppShellHtml(
             target.kind === "infrastructure" ? " infra-card" : "";
           const simClass = isOrphaned ? " sim-removed" : isDegraded ? " sim-degraded" : "";
 
-          const exportedStuds = target.studs.slice(0, 4).map((s) => s.label).join(", ");
+          const exportedStuds = target.studs.slice(0, 3).map((s) => s.label).join(", ");
           rightCardsHtml +=
             '<div class="flow-card clickable' + cardKindClass + simClass + '" data-anchor-right="' + esc(conn.id) + '" data-pivot-block="' + esc(target.id) + '">' +
               '<div class="card-title-row">' +
-                '<span class="card-title">' + esc(target.title) + '</span>' +
+                '<span class="card-title">' + esc(target.title.replaceAll("/", " / ")) + '</span>' +
                 '<span class="badge ' + (target.kind === "shared_subsystem" ? 'badge-cli' : target.kind === "infrastructure" ? 'badge-ui' : 'badge-http') + '">' +
-                  (isOrphaned ? 'ORPHANED (0 left)' : isDegraded ? 'DROPS TO 1 USER' : 'USED BY ' + totalConsumers) +
+                  (isOrphaned ? 'ORPHANED' : isDegraded ? '1 USER LEFT' : 'SHARED · ' + totalConsumers) +
                 '</span>' +
               '</div>' +
               (exportedStuds
-                ? '<div style="font-family:var(--mono);font-size:11px;color:var(--text-1);margin-bottom:5px">Exports: ' + esc(exportedStuds) + '</div>'
+                ? '<div style="font-family:var(--mono);font-size:12px;color:var(--ink-1);margin-bottom:4px;overflow-wrap:break-word">Exports: ' + escBreakable(exportedStuds) + '</div>'
                 : '') +
               '<div class="card-loc" data-open-file="' + esc(ev?.file || "") + '" data-open-line="' + (ev?.line || 1) + '">' +
-                esc(conn.label) + (ev ? ' · ' + esc(ev.file) + ':' + ev.line : '') +
+                escBreakable(summarizeConnectionLabel(conn.label)) + (ev ? ' · ' + escBreakable(ev.file) + ':' + ev.line : '') +
               '</div>' +
             '</div>';
         }
@@ -2050,7 +2019,7 @@ export function renderFeatureMapAppShellHtml(
             leftCardsHtml +
           '</div>' +
           '<div class="flow-col">' +
-            '<div class="col-header"><span>2. ' + (block.kind === "feature" ? "Feature Implementation" : "Shared Module") + '</span><span>' + block.size.lines + ' lines</span></div>' +
+            '<div class="col-header"><span>' + (block.kind === "feature" ? "Exclusive Parcels (Owned)" : "Shared Parcel") + '</span><span class="col-count">' + block.size.lines + ' lines</span></div>' +
             centerCardHtml +
           '</div>' +
           '<div class="flow-col">' +
@@ -2070,16 +2039,16 @@ export function renderFeatureMapAppShellHtml(
         rowsHtml +=
           '<div class="flow-card clickable" data-open-file="' + esc(c.file) + '" data-open-line="' + c.line + '">' +
             '<div class="card-title-row">' +
-              '<span class="card-title" style="font-family:var(--mono)">' + esc(c.symbol) + '</span>' +
+              '<span class="card-title" style="font-family:var(--mono)">' + escBreakable(c.symbol) + '</span>' +
               '<span class="badge ' + (c.verdict === "VALIDATED_SAFE_TO_DELETE" ? 'badge-ok' : c.verdict === "UNKNOWN_DYNAMIC_USAGE" ? 'badge-neutral' : 'badge-warn') + '">' + esc(c.verdict) + '</span>' +
             '</div>' +
-            '<div style="color:var(--text-1);font-size:12px;margin-bottom:6px">' + esc(c.reason) + '</div>' +
-            '<div class="card-loc">' + esc(c.file) + ':' + c.line + '</div>' +
+            '<div style="color:var(--ink-1);font-size:13px;margin-bottom:6px">' + esc(c.reason) + '</div>' +
+            '<div class="card-loc">' + escBreakable(c.file) + ':' + c.line + '</div>' +
           '</div>';
       }
       bodyEl.innerHTML =
-        '<div style="max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:12px">' +
-          '<div class="col-header"><span>Unreachable / Unused Symbols in ' + esc(block.filePaths[0] || "") + '</span><span>' + candidates.length + ' candidate(s)</span></div>' +
+        '<div class="flow-col" style="max-width:860px;margin:0 auto">' +
+          '<div class="col-header"><span>Unreachable / Unused Symbols in ' + esc(block.filePaths[0] || "") + '</span><span class="col-count">' + candidates.length + ' candidate(s)</span></div>' +
           rowsHtml +
         '</div>';
       wireStageInteractions(bodyEl);
@@ -2111,6 +2080,27 @@ export function renderFeatureMapAppShellHtml(
           if (firstFile) openSource(firstFile, 1, 1);
         });
       });
+
+      const board = document.getElementById("flow-board");
+      if (board) {
+        const anchorCards = board.querySelectorAll("[data-anchor-left], [data-anchor-right]");
+        anchorCards.forEach((card) => {
+          card.addEventListener("pointerenter", () => {
+            hoveredAnchorId = card.getAttribute("data-anchor-left") || card.getAttribute("data-anchor-right");
+            board.classList.add("is-tracing");
+            anchorCards.forEach((other) => {
+              other.classList.toggle("dimmed", other !== card);
+            });
+            drawConnectors();
+          });
+          card.addEventListener("pointerleave", () => {
+            hoveredAnchorId = null;
+            board.classList.remove("is-tracing");
+            anchorCards.forEach((other) => other.classList.remove("dimmed"));
+            drawConnectors();
+          });
+        });
+      }
     }
 
     function drawConnectors() {
@@ -2120,47 +2110,66 @@ export function renderFeatureMapAppShellHtml(
       if (!board || !svg || !centerCard) return;
 
       const boardRect = board.getBoundingClientRect();
+      if (boardRect.width < 600) {
+        svg.innerHTML = "";
+        return;
+      }
       const centerRect = centerCard.getBoundingClientRect();
       svg.setAttribute("viewBox", "0 0 " + boardRect.width + " " + boardRect.height);
 
-      const paths = [];
+      const paths = [
+        '<defs>' +
+          '<pattern id="cadastral-graticule" width="24" height="24" patternUnits="userSpaceOnUse">' +
+            '<path d="M 24 0 L 0 0 0 24" fill="none" stroke="#94A3B8" stroke-opacity="0.22" stroke-width="1" />' +
+          '</pattern>' +
+        '</defs>' +
+        '<rect x="0" y="0" width="' + boardRect.width + '" height="' + boardRect.height + '" fill="url(#cadastral-graticule)" />'
+      ];
       const cyLeftX = centerRect.left - boardRect.left;
       const cyRightX = centerRect.right - boardRect.left;
-      const cyMidY = centerRect.top - boardRect.top + Math.min(72, centerRect.height / 2);
+      const cyMidY = centerRect.top - boardRect.top + Math.min(48, centerRect.height / 2);
 
-      board.querySelectorAll("[data-anchor-left]").forEach((card) => {
+      // Orthogonal Cadastral Survey Callout Lines (Left -> Center in Surveyor Blue)
+      board.querySelectorAll("[data-anchor-left]").forEach((card, idx) => {
+        const anchorId = card.getAttribute("data-anchor-left");
+        const isDimmed = hoveredAnchorId && hoveredAnchorId !== anchorId;
+        const isFocused = hoveredAnchorId && hoveredAnchorId === anchorId;
         const r = card.getBoundingClientRect();
         const x1 = r.right - boardRect.left;
         const y1 = r.top - boardRect.top + r.height / 2;
         const x2 = cyLeftX;
-        const y2 = cyMidY;
-        const dx = (x2 - x1) * 0.5;
-        const d = "M " + x1 + " " + y1 + " C " + (x1 + dx) + " " + y1 + ", " + (x2 - dx) + " " + y2 + ", " + x2 + " " + y2;
+        const y2 = cyMidY + (idx % 3 - 1) * 6;
+        const midX = Math.round(x1 + (x2 - x1) * 0.5);
+        const d = "M " + x1 + " " + y1 + " L " + midX + " " + y1 + " L " + midX + " " + y2 + " L " + x2 + " " + y2;
+        const opacity = isDimmed ? "0.22" : isFocused ? "1" : "0.78";
+        const width = isFocused ? "2.2" : "1.5";
         paths.push(
-          '<path d="' + d + '" fill="none" stroke="rgba(59,130,246,0.28)" stroke-width="2" />' +
-          '<path class="flow-edge-anim" d="' + d + '" fill="none" stroke="rgba(56,189,248,0.72)" stroke-width="1.6" />' +
-          '<circle cx="' + x1 + '" cy="' + y1 + '" r="3.5" fill="#38bdf8" />' +
-          '<circle cx="' + x2 + '" cy="' + y2 + '" r="3.5" fill="#3b82f6" />'
+          '<path d="' + d + '" fill="none" stroke="#1D4ED8" stroke-opacity="' + opacity + '" stroke-width="' + width + '" />' +
+          '<circle cx="' + x1 + '" cy="' + y1 + '" r="3.5" fill="#FFFFFF" stroke="#1D4ED8" stroke-width="2" />' +
+          '<circle cx="' + x2 + '" cy="' + y2 + '" r="3.5" fill="#1D4ED8" />'
         );
       });
 
-      board.querySelectorAll("[data-anchor-right]").forEach((card) => {
+      // Orthogonal Cadastral Survey Callout Lines (Center -> Right in Surveyor Ochre / Crimson)
+      board.querySelectorAll("[data-anchor-right]").forEach((card, idx) => {
+        const anchorId = card.getAttribute("data-anchor-right");
+        const isDimmed = hoveredAnchorId && hoveredAnchorId !== anchorId;
+        const isFocused = hoveredAnchorId && hoveredAnchorId === anchorId;
         const r = card.getBoundingClientRect();
         const x1 = cyRightX;
-        const y1 = cyMidY;
+        const y1 = cyMidY + (idx % 3 - 1) * 6;
         const x2 = r.left - boardRect.left;
         const y2 = r.top - boardRect.top + r.height / 2;
-        const dx = (x2 - x1) * 0.5;
+        const midX = Math.round(x1 + (x2 - x1) * 0.5);
         const isWarn = card.classList.contains("sim-degraded") || card.classList.contains("sim-removed");
-        const baseStroke = isWarn ? "rgba(244,63,94,0.32)" : "rgba(168,85,247,0.28)";
-        const animStroke = isWarn ? "rgba(251,113,133,0.8)" : "rgba(192,132,252,0.75)";
-        const dot = isWarn ? "#f43f5e" : "#a855f7";
-        const d = "M " + x1 + " " + y1 + " C " + (x1 + dx) + " " + y1 + ", " + (x2 - dx) + " " + y2 + ", " + x2 + " " + y2;
+        const color = isWarn ? "#DC2626" : "#B45309";
+        const opacity = isDimmed ? "0.22" : isFocused ? "1" : "0.82";
+        const width = isFocused ? "2.2" : "1.5";
+        const d = "M " + x1 + " " + y1 + " L " + midX + " " + y1 + " L " + midX + " " + y2 + " L " + x2 + " " + y2;
         paths.push(
-          '<path d="' + d + '" fill="none" stroke="' + baseStroke + '" stroke-width="2" />' +
-          '<path class="flow-edge-anim" d="' + d + '" fill="none" stroke="' + animStroke + '" stroke-width="1.6" />' +
-          '<circle cx="' + x1 + '" cy="' + y1 + '" r="3.5" fill="' + dot + '" />' +
-          '<circle cx="' + x2 + '" cy="' + y2 + '" r="3.5" fill="' + dot + '" />'
+          '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-opacity="' + opacity + '" stroke-width="' + width + '" />' +
+          '<circle cx="' + x1 + '" cy="' + y1 + '" r="3.5" fill="' + color + '" />' +
+          '<circle cx="' + x2 + '" cy="' + y2 + '" r="3.5" fill="#FFFFFF" stroke="' + color + '" stroke-width="2" />'
         );
       });
 
