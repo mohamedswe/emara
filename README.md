@@ -85,6 +85,18 @@ Audit artifacts can contain private names, paths, and documentation. Do not post
 The [sample's unchanged report](docs/samples/room-booking/audit-report.md) shows the current output. Read its [review notes](docs/samples/room-booking/README.md#where-the-report-gets-it-wrong) before interpreting the counts or verdicts.
 
 
+## Why I built this
+
+AI coding agents can produce a large codebase quickly and describe it confidently, but not always accurately. I was building that way myself and couldn't tell whether what I'd shipped matched what the agent said it did. Vibe-coded apps also get too large to read end to end. Emara is an auditor for that situation: it checks what a codebase actually does, independent of what its README or an agent claims, and shows how the files connect as a graph you can explore.
+
+## How it was built
+
+Most of the code was written by AI coding agents working under my direction. The design decisions were mine:
+
+- **Deterministic core, no LLM in the loop.** An earlier approach that had a model judge the codebase took about seven minutes on large repositories and used a lot of tokens. Deterministic static analysis reached the same results, so the model is now optional and only proposes readable labels.
+- **Graph first.** Everything is built on a file and symbol dependency graph, because the goal was to see which files interact with which, then build features, dead-code checks, and the visualizer on top of it.
+- **Evidence over verdicts.** Every finding links to exact source lines, and nothing is marked safe to delete automatically. A person should be able to check each claim.
+
 ## What it finds
 
 - Features classified as implemented and documented, implemented but undocumented, partially implemented, documented but not implemented (DNI), or ambiguous.
