@@ -21,9 +21,9 @@ Browse static snapshot demos in your browser with no installation. Each page sho
 - [**alan2207/bulletproof-react** (React / Next.js) →](https://mohamedswe.github.io/emara/bulletproof-react.html)
 - [**Snapshot index →**](https://mohamedswe.github.io/emara/)
 
-[![Watch the Emara walkthrough preview](docs/media/emara-preview.png)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4)
+[![Emara interactive architecture visualizer walkthrough](docs/media/emara-walkthrough.gif)](https://mohamedswe.github.io/emara/)
 
-[Watch or download the walkthrough demo (MP4)](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4).
+[**Watch or download the full 1080p walkthrough video (MP4)**](https://raw.githubusercontent.com/mohamedswe/emara/main/docs/media/emara-walkthrough.mp4) · [**High-DPI static preview (PNG)**](docs/media/emara-preview.png) · [**Launch live interactive demos →**](https://mohamedswe.github.io/emara/)
 
 ## Quickstart
 

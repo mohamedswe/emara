@@ -171,7 +171,7 @@ test("refuses to copy a symlink that points outside the repository", async (cont
 
 test("an in-repository relative symlink cannot write through to the original repository", async (context) => {
   const repositoryPath = await fixtureRepository(context);
-  await writeFixture(repositoryPath, "src/value.txt", "original\n");
+  await writeFixture(repositoryPath, "src/value.txt", "original");
   try {
     await symlink("src", join(repositoryPath, "lib"), "dir");
   } catch (error) {
